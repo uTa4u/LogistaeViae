@@ -4,6 +4,7 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
+// TODO: refactor into CommonProxy -> ClientProxy instead
 public interface IProxy {
 
     void preInit(FMLPreInitializationEvent event);
