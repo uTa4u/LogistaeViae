@@ -16,6 +16,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.client.model.BakedItemModel;
@@ -29,6 +30,7 @@ import java.util.Random;
 
 // FIXME: fix missing texture, fix missing break particles, remove unused models, fix missing item model
 //        add checks for formats etc
+//        steal textures from LP for mc 1.2.5 lol
 public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimplePipe> {
 
     private static final Random RNG = new Random(1);
@@ -95,36 +97,34 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
         int[] vertexData = quad.getVertexData();
 
         EntityPlayer player = Minecraft.getMinecraft().player;
-        float pitch = player.rotationPitch;
-        float yaw = player.rotationYaw;
 
         double start = 0.25;
         double end = start + 0.5;
         double zStart = 0.5;
 
         int offset = 0;
-        bufferPos(buffer, start, start, zStart, pitch, yaw);
+        bufferPos(buffer, start, start, zStart, player.posX, player.posY + player.eyeHeight, player.posZ);
         bufferColor(buffer, vertexData[3 + offset]);
         buffer.tex(tex.getMinU(), tex.getMaxV());
         buffer.lightmap(skyLight, blockLight);
         buffer.endVertex();
 
         offset += 7;
-        bufferPos(buffer, end, start, zStart, pitch, yaw);
+        bufferPos(buffer, end, start, zStart, player.posX, player.posY + player.eyeHeight, player.posZ);
         bufferColor(buffer, vertexData[3 + offset]);
         buffer.tex(tex.getMaxU(), tex.getMaxV());
         buffer.lightmap(skyLight, blockLight);
         buffer.endVertex();
 
         offset += 7;
-        bufferPos(buffer, end, end, zStart, pitch, yaw);
+        bufferPos(buffer, end, end, zStart, player.posX, player.posY + player.eyeHeight, player.posZ);
         bufferColor(buffer, vertexData[3 + offset]);
         buffer.tex(tex.getMaxU(), tex.getMinV());
         buffer.lightmap(skyLight, blockLight);
         buffer.endVertex();
 
         offset += 7;
-        bufferPos(buffer, start, end, zStart, pitch, yaw);
+        bufferPos(buffer, start, end, zStart, player.posX, player.posY + player.eyeHeight, player.posZ);
         bufferColor(buffer, vertexData[3 + offset]);
         buffer.tex(tex.getMinU(), tex.getMinV());
         buffer.lightmap(skyLight, blockLight);
@@ -137,21 +137,47 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
     }
 
     // Normal is towards +z same as pitch and yaw = 0
-    // Math taken from Vec3d
-    private static void bufferPos(BufferBuilder buffer, double x, double y, double z, float pitch, float yaw) {
-        double f, f1;
+    private static void bufferPos(BufferBuilder buffer, double x, double y, double z, double px, double py, double pz) {
+        // forward
+        double fx = px - 0.5;
+        double fy = py - 0.5;
+        double fz = pz - 0.5;
+        double fd = MathHelper.sqrt(fx * fx + fy * fy + fz * fz);
+        if (fd < 1e-4) {
+            buffer.pos(x, y, z);
+            return;
+        }
+        fx /= fd;
+        fy /= fd;
+        fz /= fd;
 
-        f = MathHelper.cos(pitch);
-        f1 = MathHelper.sin(pitch);
-        y = y * f + z * f1;
-        z = z * f - y * f1;
+        // right
+        double rx = 1 * fz - 0 * fy;
+        double ry = 0 * fx - 0 * fz;
+        double rz = 0 * fy - 1 * fx;
+        double rd = MathHelper.sqrt(rx * rx + ry * ry + rz * rz);
+        rx /= rd;
+        ry /= rd;
+        rz /= rd;
 
-        f = MathHelper.cos(yaw);
-        f1 = MathHelper.sin(yaw);
-        x = x * f + z * f1;
-        z = z * f - x * f1;
+        // up
+        double ux = fy * rz - fz * ry;
+        double uy = fz * rx - fx * rz;
+        double uz = fx * ry - fy * rx;
+        double ud = MathHelper.sqrt(ux * ux + uy * uy + uz * uz);
+        ux /= ud;
+        uy /= ud;
+        uz /= ud;
 
-        buffer.pos(x, y, z);
+        x -= 0.5;
+        y -= 0.5;
+        z -= 0.5;
+
+        buffer.pos(
+                rx * x + ux * y + fx * z + 0.5,
+                ry * x + uy * y + fy * z + 0.5,
+                rz * x + uz * y + fz * z + 0.5
+        );
     }
 
 }
