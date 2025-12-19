@@ -1,6 +1,7 @@
 package su.uTa4u.logistaeviae.tileentity;
 
 import net.minecraft.block.Block;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
@@ -9,7 +10,9 @@ import net.minecraft.world.IBlockAccess;
 import su.uTa4u.logistaeviae.block.BlockSimplePipe;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
 public class TileEntitySimplePipe extends TileEntity {
