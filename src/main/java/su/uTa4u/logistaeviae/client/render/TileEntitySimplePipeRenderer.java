@@ -6,6 +6,7 @@ import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.SimpleBakedModel;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.init.Items;
@@ -45,6 +46,8 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
 
         Item item = null;
         while (item == null) {
+            // TODO: blocks aren't rendered properly because coords are hardcoded in putQuad
+            //       blocks should take up the entity inside of the pipe, items should face the player
             int id = RNG.nextInt(128);
             item = Item.getItemById(id);
         }
@@ -75,7 +78,7 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
     }
 
     // quad is in DefaultVertexFormats.ITEM format
-    private void putQuad(@Nonnull final BufferBuilder buffer, BakedQuad quad, int skyLight, int blockLight) {
+    private void putQuad(@Nonnull BufferBuilder buffer, BakedQuad quad, int skyLight, int blockLight) {
         VertexFormat format = quad.getFormat();
 
         if (format != DefaultVertexFormats.ITEM) {
@@ -86,43 +89,45 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
             throw new IllegalStateException("Expected DefaultVertexFormats.BLOCK for buffer, but got " + format);
         }
 
+        TextureAtlasSprite tex = quad.getSprite();
         int[] vertexData = quad.getVertexData();
-        final double size = 1;
-        final double start = 0.0;
-        final double zStart = 1;
 
-        for (int i = 0; i < 4; i++) {
-            switch (i) {
-                case 0:
-                    buffer.pos(start, start, zStart);
-                    break;
-                case 1:
-                    buffer.pos(start + size, start, zStart);
-                    break;
-                case 2:
-                    buffer.pos(start + size, start + size, zStart);
-                    break;
-                case 3:
-                    buffer.pos(start, start + size, zStart);
-                    break;
-            }
+        final double size = 0.375;
+        final double start = 0.3125;
+        final double zStart = 0.5;
 
-            // 0, 1, 2 is position
-            int color = vertexData[3 + i * 7];
-            buffer.color(
-                    (color >>> 16) & 0xFF,
-                    (color >>> 8) & 0xFF,
-                    color & 0xFF,
-                    (color >>> 24) & 0xFF
-            );
+        int offset = 0;
+        buffer.pos(start, start, zStart);
+        bufferColor(buffer, vertexData[3 + offset]);
+        buffer.tex(tex.getMinU(), tex.getMaxV());
+        buffer.lightmap(skyLight, blockLight);
+        buffer.endVertex();
 
-            buffer.tex(Float.intBitsToFloat(vertexData[4 + i * 7]), Float.intBitsToFloat(vertexData[5 + i * 7]));
+        offset += 7;
+        buffer.pos(start + size, start, zStart);
+        bufferColor(buffer, vertexData[3 + offset]);
+        buffer.tex(tex.getMaxU(), tex.getMaxV());
+        buffer.lightmap(skyLight, blockLight);
+        buffer.endVertex();
 
-            buffer.lightmap(skyLight, blockLight);
+        offset += 7;
+        buffer.pos(start + size, start + size, zStart);
+        bufferColor(buffer, vertexData[3 + offset]);
+        buffer.tex(tex.getMaxU(), tex.getMinV());
+        buffer.lightmap(skyLight, blockLight);
+        buffer.endVertex();
 
-            buffer.endVertex();
-        }
+        offset += 7;
+        buffer.pos(start, start + size, zStart);
+        bufferColor(buffer, vertexData[3 + offset]);
+        buffer.tex(tex.getMinU(), tex.getMinV());
+        buffer.lightmap(skyLight, blockLight);
+        buffer.endVertex();
 
+    }
+
+    private static void bufferColor(BufferBuilder buffer, int color) {
+        buffer.color((color >>> 16) & 0xFF, (color >>> 8) & 0xFF, color & 0xFF, (color >>> 24) & 0xFF);
     }
 
 }
