@@ -16,7 +16,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.client.model.BakedItemModel;
@@ -59,10 +58,9 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
 
         IBakedModel model = Minecraft.getMinecraft().getRenderItem().getItemModelMesher().getItemModel(new ItemStack(item));
 
-        buffer.setTranslation(x, y, z);
         if (model instanceof BakedItemModel) {
             for (BakedQuad quad : model.getQuads(null, null, 0)) {
-                this.putQuad(buffer, quad, skyLight, blockLight);
+                this.putQuad(buffer, quad, x, y, z, skyLight, blockLight);
             }
         } else if (model instanceof PerspectiveMapWrapper) {
             IBakedModel parent = ((PerspectiveMapWrapperAccessor) model).getParent();
@@ -70,19 +68,18 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
                 // TODO: get quads for visible sides only
                 for (EnumFacing side : EnumFacing.VALUES) {
                     for (BakedQuad quad : parent.getQuads(null, side, 0)) {
-                        this.putQuad(buffer, quad, skyLight, blockLight);
+                        this.putQuad(buffer, quad, x, y, z, skyLight, blockLight);
                     }
                 }
             }
         } else {
             // TODO: render missingno
         }
-        buffer.setTranslation(0, 0, 0);
 
     }
 
     // quad is in DefaultVertexFormats.ITEM format
-    private void putQuad(@Nonnull BufferBuilder buffer, BakedQuad quad, int skyLight, int blockLight) {
+    private void putQuad(@Nonnull BufferBuilder buffer, BakedQuad quad, double x, double y, double z, int skyLight, int blockLight) {
         VertexFormat format = quad.getFormat();
 
         if (format != DefaultVertexFormats.ITEM) {
@@ -103,28 +100,28 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
         double zStart = 0.5;
 
         int offset = 0;
-        bufferPos(buffer, start, start, zStart, player.posX, player.posY + player.eyeHeight, player.posZ);
+        bufferPos(buffer, x, y, z, start, start, zStart, player.posX, player.posY + player.eyeHeight, player.posZ);
         bufferColor(buffer, vertexData[3 + offset]);
         buffer.tex(tex.getMinU(), tex.getMaxV());
         buffer.lightmap(skyLight, blockLight);
         buffer.endVertex();
 
         offset += 7;
-        bufferPos(buffer, end, start, zStart, player.posX, player.posY + player.eyeHeight, player.posZ);
+        bufferPos(buffer, x, y, z, end, start, zStart, player.posX, player.posY + player.eyeHeight, player.posZ);
         bufferColor(buffer, vertexData[3 + offset]);
         buffer.tex(tex.getMaxU(), tex.getMaxV());
         buffer.lightmap(skyLight, blockLight);
         buffer.endVertex();
 
         offset += 7;
-        bufferPos(buffer, end, end, zStart, player.posX, player.posY + player.eyeHeight, player.posZ);
+        bufferPos(buffer, x, y, z, end, end, zStart, player.posX, player.posY + player.eyeHeight, player.posZ);
         bufferColor(buffer, vertexData[3 + offset]);
         buffer.tex(tex.getMaxU(), tex.getMinV());
         buffer.lightmap(skyLight, blockLight);
         buffer.endVertex();
 
         offset += 7;
-        bufferPos(buffer, start, end, zStart, player.posX, player.posY + player.eyeHeight, player.posZ);
+        bufferPos(buffer, x, y, z, start, end, zStart, player.posX, player.posY + player.eyeHeight, player.posZ);
         bufferColor(buffer, vertexData[3 + offset]);
         buffer.tex(tex.getMinU(), tex.getMinV());
         buffer.lightmap(skyLight, blockLight);
@@ -136,15 +133,14 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
         buffer.color((color >>> 16) & 0xFF, (color >>> 8) & 0xFF, color & 0xFF, (color >>> 24) & 0xFF);
     }
 
-    // Normal is towards +z same as pitch and yaw = 0
-    private static void bufferPos(BufferBuilder buffer, double x, double y, double z, double px, double py, double pz) {
+    private static void bufferPos(BufferBuilder buffer, double wx, double wy, double wz, double lx, double ly, double lz, double px, double py, double pz) {
         // forward
-        double fx = px - 0.5;
-        double fy = py - 0.5;
-        double fz = pz - 0.5;
+        double fx = wx + px - 0.5;
+        double fy = wy + py - 0.5;
+        double fz = wz + pz - 0.5;
         double fd = MathHelper.sqrt(fx * fx + fy * fy + fz * fz);
         if (fd < 1e-4) {
-            buffer.pos(x, y, z);
+            buffer.pos(wx + lx, wy + ly, wz + lz);
             return;
         }
         fx /= fd;
@@ -169,14 +165,14 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
         uy /= ud;
         uz /= ud;
 
-        x -= 0.5;
-        y -= 0.5;
-        z -= 0.5;
+        lx -= 0.5;
+        ly -= 0.5;
+        lz -= 0.5;
 
         buffer.pos(
-                rx * x + ux * y + fx * z + 0.5,
-                ry * x + uy * y + fy * z + 0.5,
-                rz * x + uz * y + fz * z + 0.5
+                rx * lx + ux * ly + fx * lz + 0.5 + wx,
+                ry * lx + uy * ly + fy * lz + 0.5 + wy,
+                rz * lx + uz * ly + fz * lz + 0.5 + wz
         );
     }
 
