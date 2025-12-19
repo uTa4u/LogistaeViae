@@ -1,20 +1,61 @@
 {
 	"textures": {
-		"0": "logistaeviae:block/simple_pipe",
+		"0": "logistaeviae:block/pipe_base",
 		"particle": "blocks/glass"
 	},
 	"elements": [
 		{
-			"from": [4, 4, 4],
-			"to": [12, 12, 12],
-			"rotation": {"angle": 0, "axis": "y", "origin": [4, 4, 4]},
+			"name": "down",
+			"from": [0, 4, 0],
+			"to": [16, 4, 16],
 			"faces": {
-				"north": {"uv": [0, 0, 8, 8], "texture": "#0"},
-				"east": {"uv": [0, 0, 8, 8], "texture": "#0"},
-				"south": {"uv": [0, 0, 8, 8], "texture": "#0"},
-				"west": {"uv": [0, 0, 8, 8], "texture": "#0"},
-				"up": {"uv": [0, 0, 8, 8], "texture": "#0"},
-				"down": {"uv": [0, 0, 8, 8], "texture": "#0"}
+				"up":   {"uv": [0, 0, 16, 16], "texture": "#0"},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#0"}
+			}
+		},
+		{
+			"name": "up",
+			"from": [0, 12, 0],
+			"to": [16, 12, 16],
+			"faces": {
+				"up":   {"uv": [0, 0, 16, 16], "texture": "#0"},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#0"}
+			}
+		},
+		{
+			"name": "west",
+			"from": [4, 0, 0],
+			"to": [4, 16, 16],
+			"faces": {
+				"east": {"uv": [0, 0, 16, 16], "texture": "#0"},
+				"west": {"uv": [0, 0, 16, 16], "texture": "#0"}
+			}
+		},
+		{
+			"name": "east",
+			"from": [12, 0, 0],
+			"to": [12, 16, 16],
+			"faces": {
+				"east": {"uv": [0, 0, 16, 16], "texture": "#0"},
+				"west": {"uv": [0, 0, 16, 16], "texture": "#0"}
+			}
+		},
+		{
+			"name": "north",
+			"from": [0, 0, 4],
+			"to": [16, 16, 4],
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#0"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#0"}
+			}
+		},
+		{
+			"name": "south",
+			"from": [0, 0, 12],
+			"to": [16, 16, 12],
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#0"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#0"}
 			}
 		}
 	]

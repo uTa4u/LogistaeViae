@@ -6,7 +6,9 @@ import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.SimpleBakedModel;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.renderer.vertex.VertexFormat;
+import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
@@ -20,7 +22,6 @@ import su.uTa4u.logistaeviae.mixin.PerspectiveMapWrapperAccessor;
 import su.uTa4u.logistaeviae.tileentity.TileEntitySimplePipe;
 
 import javax.annotation.Nonnull;
-import java.util.List;
 import java.util.Random;
 
 // FIXME: fix missing texture, fix missing break particles, remove unused models, fix missing item model
@@ -34,7 +35,6 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
         BlockPos pos = pipe.getPos();
         IBlockAccess world = MinecraftForgeClient.getRegionRenderCache(pipe.getWorld(), pos);
         IBlockState state = world.getBlockState(pos);
-        TextureAtlasSprite tex = Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelShapes().getTexture(state);
         int light = state.getPackedLightmapCoords(world, pos);
         int skyLight = (light >> 16) & 0xFFFF;
         int blockLight = light & 0xFFFF;
@@ -48,70 +48,80 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
             int id = RNG.nextInt(128);
             item = Item.getItemById(id);
         }
-//        item = Items.APPLE;
+        item = Items.APPLE;
 
         IBakedModel model = Minecraft.getMinecraft().getRenderItem().getItemModelMesher().getItemModel(new ItemStack(item));
 
+        buffer.setTranslation(x, y, z);
         if (model instanceof BakedItemModel) {
             for (BakedQuad quad : model.getQuads(null, null, 0)) {
-                this.putQuad(buffer, quad);
+                this.putQuad(buffer, quad, skyLight, blockLight);
             }
         } else if (model instanceof PerspectiveMapWrapper) {
-            IBakedModel parent = ((PerspectiveMapWrapperAccessor) model).logistaeviae_getParent();
+            IBakedModel parent = ((PerspectiveMapWrapperAccessor) model).getParent();
             if (parent instanceof SimpleBakedModel) {
                 // TODO: get quads for visible sides only
                 for (EnumFacing side : EnumFacing.VALUES) {
                     for (BakedQuad quad : parent.getQuads(null, side, 0)) {
-                        this.putQuad(buffer, quad);
+                        this.putQuad(buffer, quad, skyLight, blockLight);
                     }
                 }
             }
         } else {
             // TODO: render missingno
         }
-
-        buffer.setTranslation(x, y, z);
-//        // Bottom face (Y = 0)
-//        buffer.pos(0, 0, 0).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-//        buffer.pos(1, 0, 0).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-//        buffer.pos(1, 0, 1).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-//        buffer.pos(0, 0, 1).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-//
-//        // Top face (Y = 1)
-//        buffer.pos(0, 1, 0).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-//        buffer.pos(0, 1, 1).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-//        buffer.pos(1, 1, 1).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-//        buffer.pos(1, 1, 0).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-//
-//        // North face (Z = 0)
-//        buffer.pos(0, 0, 0).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-//        buffer.pos(0, 1, 0).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-//        buffer.pos(1, 1, 0).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-//        buffer.pos(1, 0, 0).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-//
-//        // South face (Z = 1)
-//        buffer.pos(0, 0, 1).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-//        buffer.pos(1, 0, 1).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-//        buffer.pos(1, 1, 1).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-//        buffer.pos(0, 1, 1).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-//
-//        // West face (X = 0)
-//        buffer.pos(0, 0, 0).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-//        buffer.pos(0, 0, 1).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-//        buffer.pos(0, 1, 1).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-//        buffer.pos(0, 1, 0).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-//
-//        // East face (X = 1)
-//        buffer.pos(1, 0, 0).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-//        buffer.pos(1, 1, 0).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-//        buffer.pos(1, 1, 1).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-//        buffer.pos(1, 0, 1).color(r, g, b, a).tex(0, 0).lightmap(skyLight, blockLight).endVertex();
-
         buffer.setTranslation(0, 0, 0);
+
     }
 
-    // quad is in DefaultVertexFormats.BLOCK format
-    private void putQuad(@Nonnull final BufferBuilder buffer, BakedQuad quad) {
+    // quad is in DefaultVertexFormats.ITEM format
+    private void putQuad(@Nonnull final BufferBuilder buffer, BakedQuad quad, int skyLight, int blockLight) {
+        VertexFormat format = quad.getFormat();
+
+        if (format != DefaultVertexFormats.ITEM) {
+            throw new IllegalStateException("Expected DefaultVertexFormats.ITEM for quad, but got " + format);
+        }
+
+        if (buffer.getVertexFormat() != DefaultVertexFormats.BLOCK) {
+            throw new IllegalStateException("Expected DefaultVertexFormats.BLOCK for buffer, but got " + format);
+        }
+
+        int[] vertexData = quad.getVertexData();
+        final double size = 1;
+        final double start = 0.0;
+        final double zStart = 1;
+
+        for (int i = 0; i < 4; i++) {
+            switch (i) {
+                case 0:
+                    buffer.pos(start, start, zStart);
+                    break;
+                case 1:
+                    buffer.pos(start + size, start, zStart);
+                    break;
+                case 2:
+                    buffer.pos(start + size, start + size, zStart);
+                    break;
+                case 3:
+                    buffer.pos(start, start + size, zStart);
+                    break;
+            }
+
+            // 0, 1, 2 is position
+            int color = vertexData[3 + i * 7];
+            buffer.color(
+                    (color >>> 16) & 0xFF,
+                    (color >>> 8) & 0xFF,
+                    color & 0xFF,
+                    (color >>> 24) & 0xFF
+            );
+
+            buffer.tex(Float.intBitsToFloat(vertexData[4 + i * 7]), Float.intBitsToFloat(vertexData[5 + i * 7]));
+
+            buffer.lightmap(skyLight, blockLight);
+
+            buffer.endVertex();
+        }
 
     }
 
