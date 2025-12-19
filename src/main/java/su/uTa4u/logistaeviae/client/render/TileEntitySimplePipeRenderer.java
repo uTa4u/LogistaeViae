@@ -27,9 +27,10 @@ import su.uTa4u.logistaeviae.tileentity.TileEntitySimplePipe;
 import javax.annotation.Nonnull;
 import java.util.Random;
 
-// FIXME: fix missing texture, fix missing break particles, remove unused models, fix missing item model
+// TODO: fix missing texture, fix missing break particles, remove unused models, fix missing item model
 //        add checks for formats etc
 //        steal textures from LP for mc 1.2.5 lol
+//        only render if in distance (like 64 blocks or smth)
 public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimplePipe> {
 
     private static final Random RNG = new Random(1);
@@ -93,35 +94,35 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
         TextureAtlasSprite tex = quad.getSprite();
         int[] vertexData = quad.getVertexData();
 
-        EntityPlayer player = Minecraft.getMinecraft().player;
+        double eyeHeight = Minecraft.getMinecraft().player.eyeHeight;
 
         double start = 0.25;
         double end = start + 0.5;
         double zStart = 0.5;
 
         int offset = 0;
-        bufferPos(buffer, x, y, z, start, start, zStart, player.posX, player.posY + player.eyeHeight, player.posZ);
+        bufferPos(buffer, x, y, z, start, start, zStart, eyeHeight);
         bufferColor(buffer, vertexData[3 + offset]);
         buffer.tex(tex.getMinU(), tex.getMaxV());
         buffer.lightmap(skyLight, blockLight);
         buffer.endVertex();
 
         offset += 7;
-        bufferPos(buffer, x, y, z, end, start, zStart, player.posX, player.posY + player.eyeHeight, player.posZ);
+        bufferPos(buffer, x, y, z, end, start, zStart, eyeHeight);
         bufferColor(buffer, vertexData[3 + offset]);
         buffer.tex(tex.getMaxU(), tex.getMaxV());
         buffer.lightmap(skyLight, blockLight);
         buffer.endVertex();
 
         offset += 7;
-        bufferPos(buffer, x, y, z, end, end, zStart, player.posX, player.posY + player.eyeHeight, player.posZ);
+        bufferPos(buffer, x, y, z, end, end, zStart, eyeHeight);
         bufferColor(buffer, vertexData[3 + offset]);
         buffer.tex(tex.getMaxU(), tex.getMinV());
         buffer.lightmap(skyLight, blockLight);
         buffer.endVertex();
 
         offset += 7;
-        bufferPos(buffer, x, y, z, start, end, zStart, player.posX, player.posY + player.eyeHeight, player.posZ);
+        bufferPos(buffer, x, y, z, start, end, zStart, eyeHeight);
         bufferColor(buffer, vertexData[3 + offset]);
         buffer.tex(tex.getMinU(), tex.getMinV());
         buffer.lightmap(skyLight, blockLight);
@@ -133,13 +134,13 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
         buffer.color((color >>> 16) & 0xFF, (color >>> 8) & 0xFF, color & 0xFF, (color >>> 24) & 0xFF);
     }
 
-    private static void bufferPos(BufferBuilder buffer, double wx, double wy, double wz, double lx, double ly, double lz, double px, double py, double pz) {
+    private static void bufferPos(BufferBuilder buffer, double wx, double wy, double wz, double lx, double ly, double lz, double eyeHeight) {
         // forward
-        double fx = wx + px - 0.5;
-        double fy = wy + py - 0.5;
-        double fz = wz + pz - 0.5;
+        double fx = -wx - 0.5;
+        double fy = -wy - 0.5 + eyeHeight;
+        double fz = -wz - 0.5;
         double fd = MathHelper.sqrt(fx * fx + fy * fy + fz * fz);
-        if (fd < 1e-4) {
+        if (fd < 1e-6) {
             buffer.pos(wx + lx, wy + ly, wz + lz);
             return;
         }
@@ -147,32 +148,60 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
         fy /= fd;
         fz /= fd;
 
+        // default up
+        double upX = 0.0;
+        double upY = 1.0;
+        double upZ = 0.0;
+
         // right
-        double rx = 1 * fz - 0 * fy;
-        double ry = 0 * fx - 0 * fz;
-        double rz = 0 * fy - 1 * fx;
+        double rx = upY * fz - upZ * fy;
+        double ry = upZ * fx - upX * fz;
+        double rz = upX * fy - upY * fx;
         double rd = MathHelper.sqrt(rx * rx + ry * ry + rz * rz);
-        rx /= rd;
-        ry /= rd;
-        rz /= rd;
+        if (rd < 1e-6) {
+            upX = 1.0;
+            upY = 0.0;
+            upZ = 0.0;
+            rx = upY * fz - upZ * fy;
+            ry = upZ * fx - upX * fz;
+            rz = upX * fy - upY * fx;
+            rd = MathHelper.sqrt(rx * rx + ry * ry + rz * rz);
+        }
+        if (rd > 1e-6) {
+            rx /= rd;
+            ry /= rd;
+            rz /= rd;
+        } else {
+            // pls don't happen
+            rx = 1.0;
+            ry = 0.0;
+            rz = 0.0;
+        }
 
         // up
         double ux = fy * rz - fz * ry;
         double uy = fz * rx - fx * rz;
         double uz = fx * ry - fy * rx;
         double ud = MathHelper.sqrt(ux * ux + uy * uy + uz * uz);
-        ux /= ud;
-        uy /= ud;
-        uz /= ud;
+        if (ud > 1e-6) {
+            ux /= ud;
+            uy /= ud;
+            uz /= ud;
+        } else {
+            // pls don't happen
+            ux = 0.0;
+            uy = 1.0;
+            uz = 0.0;
+        }
 
-        lx -= 0.5;
-        ly -= 0.5;
-        lz -= 0.5;
+        double clx = lx - 0.5;
+        double cly = ly - 0.5;
+        double clz = lz - 0.5;
 
         buffer.pos(
-                rx * lx + ux * ly + fx * lz + 0.5 + wx,
-                ry * lx + uy * ly + fy * lz + 0.5 + wy,
-                rz * lx + uz * ly + fz * lz + 0.5 + wz
+                rx * clx + ux * cly + fx * clz + 0.5 + wx,
+                ry * clx + uy * cly + fy * clz + 0.5 + wy,
+                rz * clx + uz * cly + fz * clz + 0.5 + wz
         );
     }
 
