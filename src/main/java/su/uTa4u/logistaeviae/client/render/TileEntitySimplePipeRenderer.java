@@ -9,9 +9,6 @@ import net.minecraft.client.renderer.block.model.SimpleBakedModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -25,62 +22,80 @@ import su.uTa4u.logistaeviae.mixin.PerspectiveMapWrapperAccessor;
 import su.uTa4u.logistaeviae.tileentity.TileEntitySimplePipe;
 
 import javax.annotation.Nonnull;
-import java.util.Random;
 
 // TODO: fix missing texture, fix missing break particles, remove unused models, fix missing item model
-//        add checks for formats etc
 //        steal textures from LP for mc 1.2.5 lol
 //        only render if in distance (like 64 blocks or smth)
 public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimplePipe> {
-
-    private static final Random RNG = new Random(1);
 
     @Override
     public void renderTileEntityFast(@Nonnull TileEntitySimplePipe pipe, double x, double y, double z, float partialTicks, int destroyStage, float partial, @Nonnull BufferBuilder buffer) {
         BlockPos pos = pipe.getPos();
         IBlockAccess world = MinecraftForgeClient.getRegionRenderCache(pipe.getWorld(), pos);
         IBlockState state = world.getBlockState(pos);
+        // TODO: using same light for every face is not right, but idc rn
         int light = state.getPackedLightmapCoords(world, pos);
         int skyLight = (light >> 16) & 0xFFFF;
         int blockLight = light & 0xFFFF;
-        float r = 0.0f;
-        float g = 1.0f;
-        float b = 0.0f;
-        float a = 1.0f;
 
-        Item item = null;
-        while (item == null) {
-            // TODO: blocks aren't rendered properly because coords are hardcoded in putQuad
-            //       blocks should take up the entity inside of the pipe, items should face the player
-            int id = RNG.nextInt(128);
-            item = Item.getItemById(id);
-        }
-        item = Items.APPLE;
-
-        IBakedModel model = Minecraft.getMinecraft().getRenderItem().getItemModelMesher().getItemModel(new ItemStack(item));
+        IBakedModel model = Minecraft.getMinecraft().getRenderItem().getItemModelMesher().getItemModel(new ItemStack(pipe.item));
 
         if (model instanceof BakedItemModel) {
             for (BakedQuad quad : model.getQuads(null, null, 0)) {
-                this.putQuad(buffer, quad, x, y, z, skyLight, blockLight);
+                putItemQuad2d(buffer, quad, x, y, z, skyLight, blockLight);
             }
         } else if (model instanceof PerspectiveMapWrapper) {
             IBakedModel parent = ((PerspectiveMapWrapperAccessor) model).getParent();
             if (parent instanceof SimpleBakedModel) {
-                // TODO: get quads for visible sides only
+                // TODO: get quads for visible sides only using the dot product between face's normal and player's camera
                 for (EnumFacing side : EnumFacing.VALUES) {
                     for (BakedQuad quad : parent.getQuads(null, side, 0)) {
-                        this.putQuad(buffer, quad, x, y, z, skyLight, blockLight);
+                        putBlockQuad(buffer, quad, x, y, z, skyLight, blockLight);
                     }
                 }
             }
         } else {
-            // TODO: render missingno
+            // TODO: I suspect that some items/blocks might have their own models or smth
+            //       those would need to be rendered by minecraft's mechanisms,
+            //       but I think rendering non isGui3d items as flat texture and blocks as a simple cube is good
         }
 
     }
 
-    // quad is in DefaultVertexFormats.ITEM format
-    private void putQuad(@Nonnull BufferBuilder buffer, BakedQuad quad, double x, double y, double z, int skyLight, int blockLight) {
+    private static void putItemQuad2d(@Nonnull BufferBuilder buffer, BakedQuad quad, double wx, double wy, double wz, int skyLight, int blockLight) {
+        VertexFormat format = quad.getFormat();
+        if (format != DefaultVertexFormats.ITEM) {
+            throw new IllegalStateException("Expected DefaultVertexFormats.ITEM for quad, but got " + format);
+        }
+
+        VertexFormat bufferFormat = buffer.getVertexFormat();
+        if (bufferFormat != DefaultVertexFormats.BLOCK) {
+            throw new IllegalStateException("Expected DefaultVertexFormats.BLOCK for buffer, but got " + bufferFormat);
+        }
+
+        TextureAtlasSprite tex = quad.getSprite();
+        int[] vertexData = quad.getVertexData();
+        double eyeHeight = Minecraft.getMinecraft().player.eyeHeight;
+
+        double start = 0.25;
+        double end = start + 0.5;
+        double zStart = 0.5;
+
+        double[] xs = new double[]{start, end, end, start};
+        double[] ys = new double[]{start, start, end, end};
+        float[] us = new float[]{tex.getMinU(), tex.getMaxU(), tex.getMaxU(), tex.getMinU()};
+        float[] vs = new float[]{tex.getMaxV(), tex.getMaxV(), tex.getMinV(), tex.getMinV()};
+        for (int i = 0; i < 4; i++) {
+            bufferPosLookingAtCamera(buffer, wx, wy, wz, xs[i], ys[i], zStart, eyeHeight);
+            bufferColor(buffer, vertexData[3 + i * 7]);
+            buffer.tex(us[i], vs[i]);
+            buffer.lightmap(skyLight, blockLight);
+            buffer.endVertex();
+        }
+
+    }
+
+    private static void putBlockQuad(BufferBuilder buffer, BakedQuad quad, double wx, double wy, double wz, int skyLight, int blockLight) {
         VertexFormat format = quad.getFormat();
 
         if (format != DefaultVertexFormats.ITEM) {
@@ -91,50 +106,27 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
             throw new IllegalStateException("Expected DefaultVertexFormats.BLOCK for buffer, but got " + format);
         }
 
-        TextureAtlasSprite tex = quad.getSprite();
         int[] vertexData = quad.getVertexData();
-
-        double eyeHeight = Minecraft.getMinecraft().player.eyeHeight;
-
-        double start = 0.25;
-        double end = start + 0.5;
-        double zStart = 0.5;
-
-        int offset = 0;
-        bufferPos(buffer, x, y, z, start, start, zStart, eyeHeight);
-        bufferColor(buffer, vertexData[3 + offset]);
-        buffer.tex(tex.getMinU(), tex.getMaxV());
-        buffer.lightmap(skyLight, blockLight);
-        buffer.endVertex();
-
-        offset += 7;
-        bufferPos(buffer, x, y, z, end, start, zStart, eyeHeight);
-        bufferColor(buffer, vertexData[3 + offset]);
-        buffer.tex(tex.getMaxU(), tex.getMaxV());
-        buffer.lightmap(skyLight, blockLight);
-        buffer.endVertex();
-
-        offset += 7;
-        bufferPos(buffer, x, y, z, end, end, zStart, eyeHeight);
-        bufferColor(buffer, vertexData[3 + offset]);
-        buffer.tex(tex.getMaxU(), tex.getMinV());
-        buffer.lightmap(skyLight, blockLight);
-        buffer.endVertex();
-
-        offset += 7;
-        bufferPos(buffer, x, y, z, start, end, zStart, eyeHeight);
-        bufferColor(buffer, vertexData[3 + offset]);
-        buffer.tex(tex.getMinU(), tex.getMinV());
-        buffer.lightmap(skyLight, blockLight);
-        buffer.endVertex();
-
+        for (int i = 0; i < 4; i++) {
+            buffer.pos(
+                    (Float.intBitsToFloat(vertexData[0 + i * 7]) * 0.375 + 0.3125) + wx,
+                    (Float.intBitsToFloat(vertexData[1 + i * 7]) * 0.375 + 0.3125) + wy,
+                    (Float.intBitsToFloat(vertexData[2 + i * 7]) * 0.375 + 0.3125) + wz
+            );
+            bufferColor(buffer, vertexData[3 + i * 7]);
+            buffer.tex(Float.intBitsToFloat(vertexData[4 + i * 7]), Float.intBitsToFloat(vertexData[5 + i * 7]));
+            buffer.lightmap(skyLight, blockLight);
+            buffer.endVertex();
+        }
+        
     }
 
     private static void bufferColor(BufferBuilder buffer, int color) {
         buffer.color((color >>> 16) & 0xFF, (color >>> 8) & 0xFF, color & 0xFF, (color >>> 24) & 0xFF);
     }
 
-    private static void bufferPos(BufferBuilder buffer, double wx, double wy, double wz, double lx, double ly, double lz, double eyeHeight) {
+    // TODO: It is actually looking at the player's head, not at the camera (visible in f5 mode)
+    private static void bufferPosLookingAtCamera(BufferBuilder buffer, double wx, double wy, double wz, double lx, double ly, double lz, double eyeHeight) {
         // forward
         double fx = -wx - 0.5;
         double fy = -wy - 0.5 + eyeHeight;
