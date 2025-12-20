@@ -39,23 +39,9 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
         int skyLight = (light >> 16) & 0xFFFF;
         int blockLight = light & 0xFFFF;
 
-        for (Quad quad : PipeModelManager.getCenter()) {
+        for (Quad quad : PipeModelManager.getModelForPipe(pipe).values()) {
             putPipeQuad(buffer, quad, x, y, z, skyLight, blockLight);
         }
-
-        pipe.forEachConnection((connection) -> {
-            switch (connection) {
-                case DOWN:
-                case UP:
-                    break;
-                case NORTH:
-                case SOUTH:
-                    break;
-                case WEST:
-                case EAST:
-                    break;
-            }
-        });
 
         IBakedModel model = Minecraft.getMinecraft().getRenderItem().getItemModelMesher().getItemModel(new ItemStack(pipe.item));
 

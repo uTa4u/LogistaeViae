@@ -36,7 +36,12 @@ public class BlockSimplePipe extends Block implements ITileEntityProvider {
             TileEntity te = world.getTileEntity(pos);
             if (te instanceof TileEntitySimplePipe) {
                 for (EnumFacing facing : EnumFacing.VALUES) {
-                    ((TileEntitySimplePipe) te).tryConnect(world, pos, facing);
+                    ((TileEntitySimplePipe) te).tryConnect(facing);
+                    TileEntity nbour = world.getTileEntity(pos.offset(facing));
+                    if (nbour instanceof TileEntitySimplePipe) {
+                        // Redundant check for connectability, but whatever
+                        ((TileEntitySimplePipe) nbour).tryConnect(facing.getOpposite());
+                    }
                 }
             }
         }
