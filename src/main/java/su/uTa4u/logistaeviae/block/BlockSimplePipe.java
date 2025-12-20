@@ -9,6 +9,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
@@ -55,6 +56,13 @@ public class BlockSimplePipe extends Block implements ITileEntityProvider {
             return true;
         }
         return false;
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    @Nonnull
+    public EnumBlockRenderType getRenderType(@Nonnull IBlockState state) {
+        return EnumBlockRenderType.ENTITYBLOCK_ANIMATED;
     }
 
     @Override
