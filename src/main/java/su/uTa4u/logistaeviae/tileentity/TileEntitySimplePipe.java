@@ -15,6 +15,7 @@ import javax.annotation.Nonnull;
 import java.util.EnumSet;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class TileEntitySimplePipe extends TileEntity {
     public static final String TAG_CONNECTIONS = "Connections";
@@ -46,6 +47,10 @@ public class TileEntitySimplePipe extends TileEntity {
     private boolean canConnectTo(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing facing) {
         Block otherBlock = world.getBlockState(pos.offset(facing)).getBlock();
         return otherBlock instanceof BlockSimplePipe;
+    }
+
+    public void forEachConnection(Consumer<EnumFacing> consumer) {
+        this.connections.forEach(consumer);
     }
 
     @Override

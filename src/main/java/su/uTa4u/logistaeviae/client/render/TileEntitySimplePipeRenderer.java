@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IBlockAccess;
@@ -18,6 +19,9 @@ import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.client.model.BakedItemModel;
 import net.minecraftforge.client.model.PerspectiveMapWrapper;
 import net.minecraftforge.client.model.animation.FastTESR;
+import su.uTa4u.logistaeviae.Tags;
+import su.uTa4u.logistaeviae.client.model.PipeModelManager;
+import su.uTa4u.logistaeviae.client.model.Quad;
 import su.uTa4u.logistaeviae.mixin.PerspectiveMapWrapperAccessor;
 import su.uTa4u.logistaeviae.tileentity.TileEntitySimplePipe;
 
@@ -27,7 +31,6 @@ import javax.annotation.Nonnull;
 //        steal textures from LP for mc 1.2.5 lol
 //        only render if in distance (like 64 blocks or smth)
 public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimplePipe> {
-
     @Override
     public void renderTileEntityFast(@Nonnull TileEntitySimplePipe pipe, double x, double y, double z, float partialTicks, int destroyStage, float partial, @Nonnull BufferBuilder buffer) {
         BlockPos pos = pipe.getPos();
@@ -37,6 +40,24 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
         int light = state.getPackedLightmapCoords(world, pos);
         int skyLight = (light >> 16) & 0xFFFF;
         int blockLight = light & 0xFFFF;
+
+        for (Quad quad : PipeModelManager.getCenter()) {
+            putPipeQuad(buffer, quad, x, y, z, skyLight, blockLight);
+        }
+
+        pipe.forEachConnection((connection) -> {
+            switch (connection) {
+                case DOWN:
+                case UP:
+                    break;
+                case NORTH:
+                case SOUTH:
+                    break;
+                case WEST:
+                case EAST:
+                    break;
+            }
+        });
 
         IBakedModel model = Minecraft.getMinecraft().getRenderItem().getItemModelMesher().getItemModel(new ItemStack(pipe.item));
 
@@ -62,7 +83,24 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
 
     }
 
-    private static void putItemQuad2d(@Nonnull BufferBuilder buffer, BakedQuad quad, double wx, double wy, double wz, int skyLight, int blockLight) {
+    private static void putPipeQuad(BufferBuilder buffer, Quad quad, double wx, double wy, double wz, int skyLight, int blockLight) {
+        VertexFormat bufferFormat = buffer.getVertexFormat();
+        if (bufferFormat != DefaultVertexFormats.BLOCK) {
+            throw new IllegalStateException("Expected DefaultVertexFormats.BLOCK for buffer, but got " + bufferFormat);
+        }
+
+        float[] us = new float[]{quad.tex.getInterpolatedU(4), quad.tex.getInterpolatedU(12), quad.tex.getInterpolatedU(12), quad.tex.getInterpolatedU(4)};
+        float[] vs = new float[]{quad.tex.getInterpolatedV(4), quad.tex.getInterpolatedV(4), quad.tex.getInterpolatedV(12), quad.tex.getInterpolatedV(12)};
+        for (int i = 0; i < 4; i++) {
+            buffer.pos(quad.xs[i] + wx, quad.ys[i] + wy, quad.zs[i] + wz);
+            buffer.color(0xFF, 0xFF, 0xFF, 0xFF);
+            buffer.tex(us[i], vs[i]);
+            buffer.lightmap(skyLight, blockLight);
+            buffer.endVertex();
+        }
+    }
+
+    private static void putItemQuad2d(BufferBuilder buffer, BakedQuad quad, double wx, double wy, double wz, int skyLight, int blockLight) {
         VertexFormat format = quad.getFormat();
         if (format != DefaultVertexFormats.ITEM) {
             throw new IllegalStateException("Expected DefaultVertexFormats.ITEM for quad, but got " + format);
@@ -118,7 +156,7 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
             buffer.lightmap(skyLight, blockLight);
             buffer.endVertex();
         }
-        
+
     }
 
     private static void bufferColor(BufferBuilder buffer, int color) {
@@ -196,5 +234,7 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
                 rz * clx + uz * cly + fz * clz + 0.5 + wz
         );
     }
+
+
 
 }
