@@ -11,7 +11,6 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IBlockAccess;
@@ -19,7 +18,6 @@ import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.client.model.BakedItemModel;
 import net.minecraftforge.client.model.PerspectiveMapWrapper;
 import net.minecraftforge.client.model.animation.FastTESR;
-import su.uTa4u.logistaeviae.Tags;
 import su.uTa4u.logistaeviae.client.model.PipeModelManager;
 import su.uTa4u.logistaeviae.client.model.Quad;
 import su.uTa4u.logistaeviae.mixin.PerspectiveMapWrapperAccessor;
@@ -89,12 +87,10 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
             throw new IllegalStateException("Expected DefaultVertexFormats.BLOCK for buffer, but got " + bufferFormat);
         }
 
-        float[] us = new float[]{quad.tex.getInterpolatedU(4), quad.tex.getInterpolatedU(12), quad.tex.getInterpolatedU(12), quad.tex.getInterpolatedU(4)};
-        float[] vs = new float[]{quad.tex.getInterpolatedV(4), quad.tex.getInterpolatedV(4), quad.tex.getInterpolatedV(12), quad.tex.getInterpolatedV(12)};
         for (int i = 0; i < 4; i++) {
             buffer.pos(quad.xs[i] + wx, quad.ys[i] + wy, quad.zs[i] + wz);
             buffer.color(0xFF, 0xFF, 0xFF, 0xFF);
-            buffer.tex(us[i], vs[i]);
+            buffer.tex(quad.us[i], quad.vs[i]);
             buffer.lightmap(skyLight, blockLight);
             buffer.endVertex();
         }
@@ -234,7 +230,6 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
                 rz * clx + uz * cly + fz * clz + 0.5 + wz
         );
     }
-
 
 
 }
