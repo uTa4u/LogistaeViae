@@ -39,7 +39,7 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimpl
         int skyLight = (light >> 16) & 0xFFFF;
         int blockLight = light & 0xFFFF;
 
-        for (Quad quad : PipeModelManager.getModelForPipe(pipe).values()) {
+        for (Quad quad : PipeModelManager.getQuadsForPipe(pipe).values()) {
             putPipeQuad(buffer, quad, x, y, z, skyLight, blockLight);
         }
 

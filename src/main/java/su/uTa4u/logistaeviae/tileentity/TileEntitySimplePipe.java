@@ -10,8 +10,6 @@ import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.common.util.Constants;
 import su.uTa4u.logistaeviae.block.BlockSimplePipe;
 
@@ -87,7 +85,6 @@ public class TileEntitySimplePipe extends TileEntity {
                 this.connections.add(facing);
             }
         }
-
     }
 
     @Override
