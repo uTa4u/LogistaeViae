@@ -20,6 +20,7 @@ public class ClientProxy implements IProxy {
 
     @Override
     public void init(FMLInitializationEvent event) {
+        ModBlocks.registerRender();
         ClientRegistry.bindTileEntitySpecialRenderer(TileEntitySimplePipe.class, new TileEntitySimplePipeRenderer());
     }
 

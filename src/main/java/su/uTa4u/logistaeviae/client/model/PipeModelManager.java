@@ -13,11 +13,11 @@ public final class PipeModelManager {
     private static final float FROM = 0.25f;
     private static final float TOOO = 0.75f;
 
-    public static final ResourceLocation TEXTURE_BASE = new ResourceLocation(Tags.MOD_ID, "block/pipe_base");
+    public static final ResourceLocation COBBLESTONE = new ResourceLocation(Tags.MOD_ID, "block/pipe/cobblestone");
 
     // TODO: Cache this
     public static EnumMap<EnumFacing, Quad> getQuadsForPipe(TileEntitySimplePipe pipe) {
-        TextureAtlasSprite tex = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(TEXTURE_BASE.toString());
+        TextureAtlasSprite tex = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(COBBLESTONE.toString());
         float umin = tex.getMinU();
         float umax = tex.getMaxU();
         float vmin = tex.getMinV();

@@ -1,6 +1,5 @@
 package su.uTa4u.logistaeviae.client.model;
 
-// TODO maybe use UnpackedBakedQuad idk
 // four points in order
 // 3 2
 // 0 1

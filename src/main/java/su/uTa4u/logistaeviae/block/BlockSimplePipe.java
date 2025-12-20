@@ -25,14 +25,12 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class BlockSimplePipe extends Block implements ITileEntityProvider {
-    // Max 64 variants should be fine
     private static final Byte2ObjectMap<AxisAlignedBB> AABB_BY_CONNECTION = generateAABBs();
-    private static final String NAME = "simple_pipe";
 
     public BlockSimplePipe() {
         super(Material.CIRCUITS);
-        this.setRegistryName(NAME);
-        this.setTranslationKey(NAME);
+        this.setRegistryName("pipe/cobblestone");
+        this.setTranslationKey("pipe_cobblestone");
     }
 
     @Override
@@ -123,12 +121,12 @@ public class BlockSimplePipe extends Block implements ITileEntityProvider {
         double zero = 0.00;
         double tooo = 0.75;
         AxisAlignedBB center = new AxisAlignedBB(from, from, from, tooo, tooo, tooo);
-        AxisAlignedBB down   = new AxisAlignedBB(from, zero, from, tooo, from, tooo);
-        AxisAlignedBB up     = new AxisAlignedBB(from, tooo, from, tooo, onee, tooo);
-        AxisAlignedBB north  = new AxisAlignedBB(from, from, zero, tooo, tooo, from);
-        AxisAlignedBB south  = new AxisAlignedBB(from, from, tooo, tooo, tooo, onee);
-        AxisAlignedBB west   = new AxisAlignedBB(zero, from, from, from, tooo, tooo);
-        AxisAlignedBB east   = new AxisAlignedBB(tooo, from, from, onee, tooo, tooo);
+        AxisAlignedBB down = new AxisAlignedBB(from, zero, from, tooo, from, tooo);
+        AxisAlignedBB up = new AxisAlignedBB(from, tooo, from, tooo, onee, tooo);
+        AxisAlignedBB north = new AxisAlignedBB(from, from, zero, tooo, tooo, from);
+        AxisAlignedBB south = new AxisAlignedBB(from, from, tooo, tooo, tooo, onee);
+        AxisAlignedBB west = new AxisAlignedBB(zero, from, from, from, tooo, tooo);
+        AxisAlignedBB east = new AxisAlignedBB(tooo, from, from, onee, tooo, tooo);
 
         for (byte i = 0; i < 64; i++) {
             if (((i >> EnumFacing.DOWN.getIndex()) & 1) == 1) {

@@ -42,7 +42,7 @@ public final class LogistaeViae {
 
         @SubscribeEvent
         public static void onTextureStitchEventPre(TextureStitchEvent.Pre event) {
-            event.getMap().registerSprite(PipeModelManager.TEXTURE_BASE);
+            event.getMap().registerSprite(PipeModelManager.COBBLESTONE);
         }
     }
 }
