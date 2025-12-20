@@ -65,11 +65,7 @@ public class TileEntitySimplePipe extends TileEntity {
     public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound nbt) {
         super.writeToNBT(nbt);
 
-        byte data = 0;
-        for (EnumFacing facing : this.connections) {
-            data |= (byte) (1 << facing.getIndex());
-        }
-        nbt.setByte(TAG_CONNECTIONS, data);
+        nbt.setByte(TAG_CONNECTIONS, this.packConnections());
 
         return nbt;
     }
@@ -107,5 +103,13 @@ public class TileEntitySimplePipe extends TileEntity {
     @Override
     public boolean hasFastRenderer() {
         return true;
+    }
+
+    public byte packConnections() {
+        byte data = 0;
+        for (EnumFacing facing : this.connections) {
+            data |= (byte) (1 << facing.getIndex());
+        }
+        return data;
     }
 }

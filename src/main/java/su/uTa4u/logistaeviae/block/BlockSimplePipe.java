@@ -1,5 +1,7 @@
 package su.uTa4u.logistaeviae.block;
 
+import it.unimi.dsi.fastutil.bytes.Byte2ObjectArrayMap;
+import it.unimi.dsi.fastutil.bytes.Byte2ObjectMap;
 import net.minecraft.block.Block;
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
@@ -11,6 +13,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
@@ -22,6 +25,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class BlockSimplePipe extends Block implements ITileEntityProvider {
+    // Max 64 variants should be fine
+    private static final Byte2ObjectMap<AxisAlignedBB> AABB_BY_CONNECTION = generateAABBs();
     private static final String NAME = "simple_pipe";
 
     public BlockSimplePipe() {
@@ -66,6 +71,17 @@ public class BlockSimplePipe extends Block implements ITileEntityProvider {
     @Override
     @SuppressWarnings("deprecation")
     @Nonnull
+    public AxisAlignedBB getBoundingBox(@Nonnull IBlockState state, @Nonnull IBlockAccess source, @Nonnull BlockPos pos) {
+        TileEntity te = source.getTileEntity(pos);
+        if (te instanceof TileEntitySimplePipe) {
+            return AABB_BY_CONNECTION.get(((TileEntitySimplePipe) te).packConnections());
+        }
+        return super.getBoundingBox(state, source, pos);
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    @Nonnull
     public EnumBlockRenderType getRenderType(@Nonnull IBlockState state) {
         return EnumBlockRenderType.ENTITYBLOCK_ANIMATED;
     }
@@ -97,5 +113,42 @@ public class BlockSimplePipe extends Block implements ITileEntityProvider {
     @Override
     public TileEntity createNewTileEntity(@Nonnull World world, int meta) {
         return new TileEntitySimplePipe();
+    }
+
+    private static Byte2ObjectMap<AxisAlignedBB> generateAABBs() {
+        Byte2ObjectMap<AxisAlignedBB> map = new Byte2ObjectArrayMap<>();
+
+        double onee = 1.00;
+        double from = 0.25;
+        double zero = 0.00;
+        double tooo = 0.75;
+        AxisAlignedBB center = new AxisAlignedBB(from, from, from, tooo, tooo, tooo);
+        AxisAlignedBB down   = new AxisAlignedBB(from, zero, from, tooo, from, tooo);
+        AxisAlignedBB up     = new AxisAlignedBB(from, tooo, from, tooo, onee, tooo);
+        AxisAlignedBB north  = new AxisAlignedBB(from, from, zero, tooo, tooo, from);
+        AxisAlignedBB south  = new AxisAlignedBB(from, from, tooo, tooo, tooo, onee);
+        AxisAlignedBB west   = new AxisAlignedBB(zero, from, from, from, tooo, tooo);
+        AxisAlignedBB east   = new AxisAlignedBB(tooo, from, from, onee, tooo, tooo);
+
+        for (byte i = 0; i < 64; i++) {
+            if (((i >> EnumFacing.DOWN.getIndex()) & 1) == 1) {
+                map.put(i, center.union(down));
+            } else if (((i >> EnumFacing.UP.getIndex()) & 1) == 1) {
+                map.put(i, center.union(up));
+            } else if (((i >> EnumFacing.NORTH.getIndex()) & 1) == 1) {
+                map.put(i, center.union(north));
+            } else if (((i >> EnumFacing.SOUTH.getIndex()) & 1) == 1) {
+                map.put(i, center.union(south));
+            } else if (((i >> EnumFacing.WEST.getIndex()) & 1) == 1) {
+                map.put(i, center.union(west));
+            } else if (((i >> EnumFacing.EAST.getIndex()) & 1) == 1) {
+                map.put(i, center.union(east));
+            } else {
+                assert i == 0;
+                map.put(i, center);
+            }
+        }
+
+        return map;
     }
 }
