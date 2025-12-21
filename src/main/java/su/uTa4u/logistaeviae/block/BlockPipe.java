@@ -27,6 +27,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class BlockPipe extends Block implements ITileEntityProvider {
+    // ArrayMap implementation should be fine for only 64 entries
     private static final Byte2ObjectMap<AxisAlignedBB> AABB_BY_CONNECTION = generateAABBs();
 
     private final ResourceLocation texture;

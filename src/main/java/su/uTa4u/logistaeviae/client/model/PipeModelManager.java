@@ -1,5 +1,7 @@
 package su.uTa4u.logistaeviae.client.model;
 
+import it.unimi.dsi.fastutil.bytes.Byte2ObjectArrayMap;
+import it.unimi.dsi.fastutil.bytes.Byte2ObjectMap;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -7,14 +9,30 @@ import net.minecraft.util.EnumFacing;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class PipeModelManager {
     private static final float FROM = 0.25f;
     private static final float TOOO = 0.75f;
 
-    // TODO: Cache this
+    // ArrayMap implementation should be fine for only 64 entries
+    private static final Map<TextureAtlasSprite, Byte2ObjectMap<EnumMap<EnumFacing, Quad>>> CACHE = new HashMap<>();
+
     public static EnumMap<EnumFacing, Quad> getQuadsForPipe(TileEntityPipe pipe) {
         TextureAtlasSprite tex = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(pipe.getBlockPipe().getTexture().toString());
+        if (!CACHE.containsKey(tex)) {
+            CACHE.put(tex, new Byte2ObjectArrayMap<>());
+        }
+        Byte2ObjectMap<EnumMap<EnumFacing, Quad>> map = CACHE.get(tex);
+        byte packedConnections = pipe.packConnections();
+        if (!map.containsKey(packedConnections)) {
+            map.put(packedConnections, computeQuadsForPipe(pipe, tex));
+        }
+        return map.get(packedConnections);
+    }
+
+    private static EnumMap<EnumFacing, Quad> computeQuadsForPipe(TileEntityPipe pipe, TextureAtlasSprite tex) {
         float umin = tex.getMinU();
         float umax = tex.getMaxU();
         float vmin = tex.getMinV();
