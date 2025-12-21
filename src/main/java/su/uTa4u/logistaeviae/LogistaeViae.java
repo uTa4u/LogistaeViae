@@ -1,7 +1,5 @@
 package su.uTa4u.logistaeviae;
 
-import net.minecraft.client.renderer.block.model.ModelResourceLocation;
-import net.minecraftforge.client.event.ModelBakeEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
@@ -16,7 +14,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import su.uTa4u.logistaeviae.block.BlockPipe;
 import su.uTa4u.logistaeviae.block.ModBlocks;
-import su.uTa4u.logistaeviae.client.model.PipeModelManager;
 import su.uTa4u.logistaeviae.proxy.IProxy;
 
 @Mod(modid = Tags.MOD_ID, name = Tags.MOD_NAME, version = Tags.VERSION)
@@ -49,12 +46,6 @@ public final class LogistaeViae {
             for (BlockPipe pipe : ModBlocks.PIPES) {
                 event.getMap().registerSprite(pipe.getTexture());
             }
-        }
-
-        @SubscribeEvent
-        public static void onModelBake(ModelBakeEvent event) {
-            ModelResourceLocation loc = new ModelResourceLocation("logistaeviae:item/pipe/cobblestone", "inventory");
-
         }
     }
 }

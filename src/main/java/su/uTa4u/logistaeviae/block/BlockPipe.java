@@ -33,8 +33,8 @@ public class BlockPipe extends Block implements ITileEntityProvider {
 
     public BlockPipe(String name) {
         super(Material.CIRCUITS);
-        this.setRegistryName("pipe/" + name);
-        this.setTranslationKey("pipe_" + name);
+        this.setRegistryName(Tags.MOD_ID, "pipe/" + name);
+        this.setTranslationKey(Tags.MOD_ID + ".pipe_" + name);
         this.texture = new ResourceLocation(Tags.MOD_ID, "block/pipe/" + name);
     }
 

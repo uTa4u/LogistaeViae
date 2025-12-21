@@ -1,0 +1,36 @@
+{
+    "__comment__": "This is a base item model for all pipes, it is loaded and textured for each pipe in ModelLoaderMixin.",
+    "parent": "block/block",
+    "elements": [
+        {
+            "from": [4, 0, 4],
+            "to": [12, 16, 12],
+            "faces": {
+                "down": {
+                    "uv": [4, 4, 12, 12],
+                    "texture": "#all"
+                },
+                "up": {
+                    "uv": [4, 4, 12, 12],
+                    "texture": "#all"
+                },
+                "north": {
+                    "uv": [4, 0, 12, 16],
+                    "texture": "#all"
+                },
+                "south": {
+                    "uv": [4, 0, 12, 16],
+                    "texture": "#all"
+                },
+                "west": {
+                    "uv": [4, 0, 12, 16],
+                    "texture": "#all"
+                },
+                "east": {
+                    "uv": [4, 0, 12, 16],
+                    "texture": "#all"
+                }
+            }
+        }
+    ]
+}

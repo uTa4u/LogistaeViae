@@ -1,15 +1,13 @@
 {
-  "package": "su.uTa4u.logistaeviae.mixin",
-  "required": true,
-  "refmap": "mixins.logistaeviae.refmap.json",
-  "target": "@env(DEFAULT)",
-  "minVersion": "0.8.5",
-  "compatibilityLevel": "JAVA_8",
-  "mixins": [
-    "PerspectiveMapWrapperAccessor"
-  ],
-  "server": [],
-  "client": [
-    "BlockModelShapesMixin"
-  ]
+    "package": "su.uTa4u.logistaeviae.mixin",
+    "required": true,
+    "refmap": "mixins.logistaeviae.refmap.json",
+    "target": "@env(DEFAULT)",
+    "minVersion": "0.8.5",
+    "compatibilityLevel": "JAVA_8",
+    "mixins": [
+        "PerspectiveMapWrapperAccessor"
+    ],
+    "server": [],
+    "client": ["BlockModelShapesMixin", "ModelLoaderMixin"]
 }
