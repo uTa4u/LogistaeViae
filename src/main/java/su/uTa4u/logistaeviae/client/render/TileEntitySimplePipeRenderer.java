@@ -21,16 +21,16 @@ import net.minecraftforge.client.model.animation.FastTESR;
 import su.uTa4u.logistaeviae.client.model.PipeModelManager;
 import su.uTa4u.logistaeviae.client.model.Quad;
 import su.uTa4u.logistaeviae.mixin.PerspectiveMapWrapperAccessor;
-import su.uTa4u.logistaeviae.tileentity.TileEntitySimplePipe;
+import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 import javax.annotation.Nonnull;
 
 // TODO: fix missing texture, fix missing break particles, remove unused models, fix missing item model
 //        steal textures from LP for mc 1.2.5 lol
 //        only render if in distance (like 64 blocks or smth)
-public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntitySimplePipe> {
+public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntityPipe> {
     @Override
-    public void renderTileEntityFast(@Nonnull TileEntitySimplePipe pipe, double x, double y, double z, float partialTicks, int destroyStage, float partial, @Nonnull BufferBuilder buffer) {
+    public void renderTileEntityFast(@Nonnull TileEntityPipe pipe, double x, double y, double z, float partialTicks, int destroyStage, float partial, @Nonnull BufferBuilder buffer) {
         BlockPos pos = pipe.getPos();
         IBlockAccess world = MinecraftForgeClient.getRegionRenderCache(pipe.getWorld(), pos);
         IBlockState state = world.getBlockState(pos);

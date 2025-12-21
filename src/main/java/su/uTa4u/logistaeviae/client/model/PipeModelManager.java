@@ -1,11 +1,10 @@
 package su.uTa4u.logistaeviae.client.model;
 
+import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ResourceLocation;
-import su.uTa4u.logistaeviae.Tags;
-import su.uTa4u.logistaeviae.tileentity.TileEntitySimplePipe;
+import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 import java.util.EnumMap;
 
@@ -13,11 +12,9 @@ public final class PipeModelManager {
     private static final float FROM = 0.25f;
     private static final float TOOO = 0.75f;
 
-    public static final ResourceLocation COBBLESTONE = new ResourceLocation(Tags.MOD_ID, "block/pipe/cobblestone");
-
     // TODO: Cache this
-    public static EnumMap<EnumFacing, Quad> getQuadsForPipe(TileEntitySimplePipe pipe) {
-        TextureAtlasSprite tex = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(COBBLESTONE.toString());
+    public static EnumMap<EnumFacing, Quad> getQuadsForPipe(TileEntityPipe pipe) {
+        TextureAtlasSprite tex = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(pipe.getBlockPipe().getTexture().toString());
         float umin = tex.getMinU();
         float umax = tex.getMaxU();
         float vmin = tex.getMinV();

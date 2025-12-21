@@ -11,7 +11,7 @@ import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.util.Constants;
-import su.uTa4u.logistaeviae.block.BlockSimplePipe;
+import su.uTa4u.logistaeviae.block.BlockPipe;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -20,7 +20,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public class TileEntitySimplePipe extends TileEntity {
+public class TileEntityPipe extends TileEntity {
     public static final String TAG_CONNECTIONS = "Connections";
 
     private final Set<EnumFacing> connections = EnumSet.noneOf(EnumFacing.class);
@@ -29,9 +29,12 @@ public class TileEntitySimplePipe extends TileEntity {
     private static final Item[] TEST_ITEMS = new Item[]{Items.APPLE, Items.BREAD, Item.getItemFromBlock(Blocks.SAND), Item.getItemFromBlock(Blocks.STONE)};
     public final Item item;
 
-    public TileEntitySimplePipe() {
+    private final BlockPipe blockPipe;
+
+    public TileEntityPipe(BlockPipe blockPipe) {
         super();
         this.item = TEST_ITEMS[RNG.nextInt(TEST_ITEMS.length)];
+        this.blockPipe = blockPipe;
     }
 
     public void tryConnect(@Nonnull EnumFacing facing) {
@@ -53,7 +56,7 @@ public class TileEntitySimplePipe extends TileEntity {
 
     private boolean canConnectTo(@Nonnull EnumFacing facing) {
         Block otherBlock = this.world.getBlockState(this.pos.offset(facing)).getBlock();
-        return otherBlock instanceof BlockSimplePipe;
+        return otherBlock instanceof BlockPipe;
     }
 
     public void forEachConnection(Consumer<EnumFacing> consumer) {
@@ -111,5 +114,9 @@ public class TileEntitySimplePipe extends TileEntity {
             data |= (byte) (1 << facing.getIndex());
         }
         return data;
+    }
+
+    public BlockPipe getBlockPipe() {
+        return this.blockPipe;
     }
 }

@@ -2,7 +2,6 @@ package su.uTa4u.logistaeviae.mixin;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockModelShapes;
 import net.minecraft.client.renderer.block.model.ModelManager;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -13,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
+import su.uTa4u.logistaeviae.block.BlockPipe;
 import su.uTa4u.logistaeviae.block.ModBlocks;
 
 @Mixin(value = BlockModelShapes.class)
@@ -32,10 +31,10 @@ public abstract class BlockModelShapesMixin {
             )
     )
     private void logistaeviae_addBuiltInBlocks(CallbackInfo ci) {
-        // Blockstate/model files in resources are not used
-        registerBuiltInBlocks(ModBlocks.SIMPLE_PIPE);
+        for (Block pipe : ModBlocks.PIPES) {
+            registerBuiltInBlocks(pipe);
+        }
     }
-
 
     @Inject(
             method = "getTexture",
@@ -46,7 +45,7 @@ public abstract class BlockModelShapesMixin {
             cancellable = true
     )
     private void logistaeviae_returnParticleTex(CallbackInfoReturnable<TextureAtlasSprite> cir, @Local Block block) {
-        if (block == ModBlocks.SIMPLE_PIPE) {
+        if (block instanceof BlockPipe) {
             cir.setReturnValue(modelManager.getTextureMap().getAtlasSprite("minecraft:blocks/glass"));
         }
     }

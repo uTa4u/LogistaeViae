@@ -13,37 +13,46 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import su.uTa4u.logistaeviae.tileentity.TileEntitySimplePipe;
+import su.uTa4u.logistaeviae.Tags;
+import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class BlockSimplePipe extends Block implements ITileEntityProvider {
+public class BlockPipe extends Block implements ITileEntityProvider {
     private static final Byte2ObjectMap<AxisAlignedBB> AABB_BY_CONNECTION = generateAABBs();
 
-    public BlockSimplePipe() {
+    private final ResourceLocation texture;
+
+    public BlockPipe(String name) {
         super(Material.CIRCUITS);
-        this.setRegistryName("pipe/cobblestone");
-        this.setTranslationKey("pipe_cobblestone");
+        this.setRegistryName("pipe/" + name);
+        this.setTranslationKey("pipe_" + name);
+        this.texture = new ResourceLocation(Tags.MOD_ID, "block/pipe/" + name);
+    }
+
+    public ResourceLocation getTexture() {
+        return this.texture;
     }
 
     @Override
     public void onBlockPlacedBy(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityLivingBase placer, @Nonnull ItemStack stack) {
         if (!world.isRemote) {
             TileEntity te = world.getTileEntity(pos);
-            if (te instanceof TileEntitySimplePipe) {
+            if (te instanceof TileEntityPipe) {
                 for (EnumFacing facing : EnumFacing.VALUES) {
-                    ((TileEntitySimplePipe) te).tryConnect(facing);
+                    ((TileEntityPipe) te).tryConnect(facing);
                     TileEntity nbour = world.getTileEntity(pos.offset(facing));
-                    if (nbour instanceof TileEntitySimplePipe) {
+                    if (nbour instanceof TileEntityPipe) {
                         // Redundant check for connectability, but whatever
-                        ((TileEntitySimplePipe) nbour).tryConnect(facing.getOpposite());
+                        ((TileEntityPipe) nbour).tryConnect(facing.getOpposite());
                     }
                 }
             }
@@ -56,8 +65,8 @@ public class BlockSimplePipe extends Block implements ITileEntityProvider {
             if (!world.isRemote) {
                 for (EnumFacing facing : EnumFacing.VALUES) {
                     TileEntity te = world.getTileEntity(pos.offset(facing));
-                    if (te instanceof TileEntitySimplePipe) {
-                        ((TileEntitySimplePipe) te).disconnect(facing.getOpposite());
+                    if (te instanceof TileEntityPipe) {
+                        ((TileEntityPipe) te).disconnect(facing.getOpposite());
                     }
                 }
             }
@@ -71,8 +80,8 @@ public class BlockSimplePipe extends Block implements ITileEntityProvider {
     @Nonnull
     public AxisAlignedBB getBoundingBox(@Nonnull IBlockState state, @Nonnull IBlockAccess source, @Nonnull BlockPos pos) {
         TileEntity te = source.getTileEntity(pos);
-        if (te instanceof TileEntitySimplePipe) {
-            return AABB_BY_CONNECTION.get(((TileEntitySimplePipe) te).packConnections());
+        if (te instanceof TileEntityPipe) {
+            return AABB_BY_CONNECTION.get(((TileEntityPipe) te).packConnections());
         }
         return super.getBoundingBox(state, source, pos);
     }
@@ -110,7 +119,7 @@ public class BlockSimplePipe extends Block implements ITileEntityProvider {
     @Nullable
     @Override
     public TileEntity createNewTileEntity(@Nonnull World world, int meta) {
-        return new TileEntitySimplePipe();
+        return new TileEntityPipe(this);
     }
 
     private static Byte2ObjectMap<AxisAlignedBB> generateAABBs() {
