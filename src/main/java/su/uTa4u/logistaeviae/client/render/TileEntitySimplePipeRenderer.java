@@ -25,9 +25,8 @@ import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 import javax.annotation.Nonnull;
 
-// TODO: fix missing texture, fix missing break particles, remove unused models, fix missing item model
-//        steal textures from LP for mc 1.2.5 lol
-//        only render if in distance (like 64 blocks or smth)
+// TODO: only render if in distance (like 64 blocks or smth)
+// TODO: render routed/unrouted overlay
 public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntityPipe> {
     @Override
     public void renderTileEntityFast(@Nonnull TileEntityPipe pipe, double x, double y, double z, float partialTicks, int destroyStage, float partial, @Nonnull BufferBuilder buffer) {
