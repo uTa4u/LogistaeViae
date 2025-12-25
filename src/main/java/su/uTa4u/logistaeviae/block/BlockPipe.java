@@ -91,7 +91,7 @@ public class BlockPipe extends Block implements ITileEntityProvider {
     @SuppressWarnings("deprecation")
     @Nonnull
     public EnumBlockRenderType getRenderType(@Nonnull IBlockState state) {
-        return EnumBlockRenderType.ENTITYBLOCK_ANIMATED;
+        return EnumBlockRenderType.INVISIBLE;
     }
 
     @Override
@@ -120,7 +120,7 @@ public class BlockPipe extends Block implements ITileEntityProvider {
     @Nullable
     @Override
     public TileEntity createNewTileEntity(@Nonnull World world, int meta) {
-        return new TileEntityPipe(this);
+        return new TileEntityPipe();
     }
 
     private static Byte2ObjectMap<AxisAlignedBB> generateAABBs() {

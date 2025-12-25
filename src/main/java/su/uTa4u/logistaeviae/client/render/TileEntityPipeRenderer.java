@@ -27,7 +27,7 @@ import javax.annotation.Nonnull;
 
 // TODO: only render if in distance (like 64 blocks or smth)
 // TODO: render routed/unrouted overlay
-public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntityPipe> {
+public final class TileEntityPipeRenderer extends FastTESR<TileEntityPipe> {
     @Override
     public void renderTileEntityFast(@Nonnull TileEntityPipe pipe, double x, double y, double z, float partialTicks, int destroyStage, float partial, @Nonnull BufferBuilder buffer) {
         BlockPos pos = pipe.getPos();
@@ -45,6 +45,7 @@ public final class TileEntitySimplePipeRenderer extends FastTESR<TileEntityPipe>
         IBakedModel model = Minecraft.getMinecraft().getRenderItem().getItemModelMesher().getItemModel(new ItemStack(pipe.item));
 
         if (model instanceof BakedItemModel) {
+            // TODO: this loop is not needed. Instead just pass TextureAtlasSprite of this item
             for (BakedQuad quad : model.getQuads(null, null, 0)) {
                 putItemQuad2d(buffer, quad, x, y, z, skyLight, blockLight);
             }

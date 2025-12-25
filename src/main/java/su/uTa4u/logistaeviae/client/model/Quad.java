@@ -1,9 +1,15 @@
 package su.uTa4u.logistaeviae.client.model;
 
+import net.minecraft.util.math.BlockPos;
+
 // four points in order
 // 3 2
 // 0 1
 public final class Quad {
+    public static final int VERTEX_COUNT = 4;
+    public static final int VERTEX_LENGHT = 5; // x, y, z, u, v
+    public static final int[] INDICES = new int[]{0, 1, 3, 3, 1, 2};
+
     public final float[] xs;
     public final float[] ys;
     public final float[] zs;
@@ -24,6 +30,18 @@ public final class Quad {
         this.zs = new float[]{z0, z1, z2, z3};
         this.us = new float[]{u0, u1, u2, u3};
         this.vs = new float[]{v0, v1, v2, v3};
+    }
+
+    public float[] pack(BlockPos pos, float cx, float cy, float cz) {
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
+        return new float[]{
+                this.xs[0] + x - cx, this.ys[0] + y - cy, this.zs[0] + z - cz, this.us[0], this.vs[0],
+                this.xs[1] + x - cx, this.ys[1] + y - cy, this.zs[1] + z - cz, this.us[1], this.vs[1],
+                this.xs[2] + x - cx, this.ys[2] + y - cy, this.zs[2] + z - cz, this.us[2], this.vs[2],
+                this.xs[3] + x - cx, this.ys[3] + y - cy, this.zs[3] + z - cz, this.us[3], this.vs[3]
+        };
     }
 
     public void extendDown(float newV) {

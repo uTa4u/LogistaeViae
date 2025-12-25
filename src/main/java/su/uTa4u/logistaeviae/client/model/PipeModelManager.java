@@ -6,6 +6,7 @@ import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.EnumFacing;
+import su.uTa4u.logistaeviae.block.BlockPipe;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 import java.util.EnumMap;
@@ -20,7 +21,9 @@ public final class PipeModelManager {
     private static final Map<TextureAtlasSprite, Byte2ObjectMap<EnumMap<EnumFacing, Quad>>> CACHE = new HashMap<>();
 
     public static EnumMap<EnumFacing, Quad> getQuadsForPipe(TileEntityPipe pipe) {
-        TextureAtlasSprite tex = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(pipe.getBlockPipe().getTexture().toString());
+        Block block = pipe.getWorld().getBlockState(pipe.getPos()).getBlock();
+        if (!(block instanceof BlockPipe)) throw new RuntimeException("TileEntityPipe is not BlockPipe, WTF");
+        TextureAtlasSprite tex = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(((BlockPipe) block).getTexture().toString());
         if (!CACHE.containsKey(tex)) {
             CACHE.put(tex, new Byte2ObjectArrayMap<>());
         }
@@ -121,50 +124,50 @@ public final class PipeModelManager {
         EnumMap<EnumFacing, Quad> quads = new EnumMap<>(EnumFacing.class);
         quads.put(EnumFacing.DOWN,
                 new Quad(
+                        FROM, FROM, FROM, umin, vmax,
                         TOOO, FROM, FROM, umin, vmin,
                         TOOO, FROM, TOOO, umax, vmin,
-                        FROM, FROM, TOOO, umax, vmax,
-                        FROM, FROM, FROM, umin, vmax
+                        FROM, FROM, TOOO, umax, vmax
                 )
         );
         quads.put(EnumFacing.UP,
                 new Quad(
-                        TOOO, TOOO, FROM, umin, vmax,
-                        TOOO, TOOO, TOOO, umax, vmax,
                         FROM, TOOO, TOOO, umax, vmin,
+                        TOOO, TOOO, TOOO, umax, vmax,
+                        TOOO, TOOO, FROM, umin, vmax,
                         FROM, TOOO, FROM, umin, vmin
                 )
         );
         quads.put(EnumFacing.NORTH,
                 new Quad(
-                        TOOO, FROM, FROM, umin, vmin,
                         FROM, FROM, FROM, umax, vmin,
-                        FROM, TOOO, FROM, umax, vmax,
-                        TOOO, TOOO, FROM, umin, vmax
+                        TOOO, FROM, FROM, umin, vmin,
+                        TOOO, TOOO, FROM, umin, vmax,
+                        FROM, TOOO, FROM, umax, vmax
                 )
         );
         quads.put(EnumFacing.SOUTH,
                 new Quad(
-                        TOOO, FROM, TOOO, umin, vmax,
-                        FROM, FROM, TOOO, umax, vmax,
                         FROM, TOOO, TOOO, umax, vmin,
-                        TOOO, TOOO, TOOO, umin, vmin
+                        TOOO, TOOO, TOOO, umin, vmin,
+                        TOOO, FROM, TOOO, umin, vmax,
+                        FROM, FROM, TOOO, umax, vmax
                 )
         );
         quads.put(EnumFacing.WEST,
                 new Quad(
                         FROM, FROM, FROM, umin, vmax,
-                        FROM, FROM, TOOO, umax, vmax,
+                        FROM, TOOO, FROM, umin, vmin,
                         FROM, TOOO, TOOO, umax, vmin,
-                        FROM, TOOO, FROM, umin, vmin
+                        FROM, FROM, TOOO, umax, vmax
                 )
         );
         quads.put(EnumFacing.EAST,
                 new Quad(
-                        TOOO, FROM, FROM, umin, vmin,
                         TOOO, FROM, TOOO, umax, vmin,
                         TOOO, TOOO, TOOO, umax, vmax,
-                        TOOO, TOOO, FROM, umin, vmax
+                        TOOO, TOOO, FROM, umin, vmax,
+                        TOOO, FROM, FROM, umin, vmin
                 )
         );
         return quads;

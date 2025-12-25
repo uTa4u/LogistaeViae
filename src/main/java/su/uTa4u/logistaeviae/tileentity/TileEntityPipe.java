@@ -29,12 +29,9 @@ public class TileEntityPipe extends TileEntity {
     private static final Item[] TEST_ITEMS = new Item[]{Items.APPLE, Items.BREAD, Item.getItemFromBlock(Blocks.SAND), Item.getItemFromBlock(Blocks.STONE)};
     public final Item item;
 
-    private final BlockPipe blockPipe;
-
-    public TileEntityPipe(BlockPipe blockPipe) {
+    public TileEntityPipe() {
         super();
         this.item = TEST_ITEMS[RNG.nextInt(TEST_ITEMS.length)];
-        this.blockPipe = blockPipe;
     }
 
     public void tryConnect(@Nonnull EnumFacing facing) {
@@ -114,9 +111,5 @@ public class TileEntityPipe extends TileEntity {
             data |= (byte) (1 << facing.getIndex());
         }
         return data;
-    }
-
-    public BlockPipe getBlockPipe() {
-        return this.blockPipe;
     }
 }
