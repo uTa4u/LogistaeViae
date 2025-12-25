@@ -1,4 +1,4 @@
-package su.uTa4u.logistaeviae;
+package su.uTa4u.logistaeviae.logic;
 
 
 public final class PipeNetworkManager {
