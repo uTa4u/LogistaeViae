@@ -16,6 +16,7 @@ import su.uTa4u.logistaeviae.block.BlockPipe;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -56,10 +57,6 @@ public class TileEntityPipe extends TileEntity {
         return otherBlock instanceof BlockPipe;
     }
 
-    public void forEachConnection(Consumer<EnumFacing> consumer) {
-        this.connections.forEach(consumer);
-    }
-
     @Override
     @Nonnull
     public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound nbt) {
@@ -75,12 +72,7 @@ public class TileEntityPipe extends TileEntity {
         super.readFromNBT(nbt);
 
         this.connections.clear();
-        byte data = nbt.getByte(TAG_CONNECTIONS);
-        for (EnumFacing facing : EnumFacing.VALUES) {
-            if (((data >> facing.getIndex()) & 1) == 1) {
-                this.connections.add(facing);
-            }
-        }
+        this.connections.addAll(unpackConnections(nbt.getByte(TAG_CONNECTIONS)));
     }
 
     @Override
@@ -111,5 +103,15 @@ public class TileEntityPipe extends TileEntity {
             data |= (byte) (1 << facing.getIndex());
         }
         return data;
+    }
+
+    public static Set<EnumFacing> unpackConnections(byte packedConnections) {
+        Set<EnumFacing> connections = EnumSet.noneOf(EnumFacing.class);
+        for (EnumFacing facing : EnumFacing.VALUES) {
+            if (((packedConnections >> facing.getIndex()) & 1) == 1) {
+                connections.add(facing);
+            }
+        }
+        return connections;
     }
 }

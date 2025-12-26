@@ -6,6 +6,7 @@ import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.ResourceLocation;
 import su.uTa4u.logistaeviae.block.BlockPipe;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
@@ -21,24 +22,27 @@ public final class PipeModelManager {
     // ArrayMap implementation should be fine for only 64 entries
     private static final Byte2ObjectMap<EnumMap<EnumFacing, Quad>> CACHE = new Byte2ObjectArrayMap<>();
 
-    public static EnumMap<EnumFacing, Quad> getQuadsForPipe(TileEntityPipe pipe) {
-        byte packedConnections = pipe.packConnections();
-        if (!CACHE.containsKey(packedConnections)) {
-            CACHE.put(packedConnections, computeQuadsForPipe(pipe));
-        }
+    public static EnumMap<EnumFacing, Quad> getTexturedQuadsForPipe(TileEntityPipe pipe) {
+        EnumMap<EnumFacing, Quad> model = getQuadsForPipe(pipe.packConnections());
 
         Block block = pipe.getWorld().getBlockState(pipe.getPos()).getBlock();
         if (!(block instanceof BlockPipe)) throw new RuntimeException("TileEntityPipe is not BlockPipe, WTF");
-        TextureAtlasSprite tex = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(((BlockPipe) block).getTexture().toString());
+        texture(model, ((BlockPipe) block).getTexture());
 
-        EnumMap<EnumFacing, Quad> model = CACHE.get(packedConnections);
-        texture(model, tex);
         return model;
     }
 
-    private static EnumMap<EnumFacing, Quad> computeQuadsForPipe(TileEntityPipe pipe) {
+    public static EnumMap<EnumFacing, Quad> getQuadsForPipe(byte packedConnections) {
+        if (!CACHE.containsKey(packedConnections)) {
+            CACHE.put(packedConnections, computeQuadsForPipe(packedConnections));
+        }
+        return CACHE.get(packedConnections);
+    }
+
+    private static EnumMap<EnumFacing, Quad> computeQuadsForPipe(byte packedConnections) {
         EnumMap<EnumFacing, Quad> model = getCenter();
-        pipe.forEachConnection((connection) -> {
+
+        for (EnumFacing connection : TileEntityPipe.unpackConnections(packedConnections)) {
             Quad quad;
             switch (connection) {
                 case DOWN: {
@@ -138,7 +142,7 @@ public final class PipeModelManager {
                     break;
                 }
             }
-        });
+        }
         return model;
     }
 
@@ -196,7 +200,8 @@ public final class PipeModelManager {
     }
 
     // These are not technically correct UV coords, some are flipped
-    private static void texture(EnumMap<EnumFacing, Quad> model, TextureAtlasSprite tex) {
+    private static void texture(EnumMap<EnumFacing, Quad> model, ResourceLocation texLoc) {
+        TextureAtlasSprite tex = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(texLoc.toString());
         float umin;
         float umax;
         float vmin;
@@ -240,7 +245,8 @@ public final class PipeModelManager {
                     vmin = tex.getInterpolatedV(16 * quad.ys[0]);
                     vmax = tex.getInterpolatedV(16 * quad.ys[3]);
                     break;
-                default: throw new IllegalStateException("Unknown EnumFacing value!");
+                default:
+                    throw new IllegalStateException("Unknown EnumFacing value!");
             }
             quad.texture(
                     umin, vmin,
