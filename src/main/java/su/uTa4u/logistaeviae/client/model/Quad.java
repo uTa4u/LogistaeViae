@@ -1,6 +1,7 @@
 package su.uTa4u.logistaeviae.client.model;
 
 import net.minecraft.util.math.BlockPos;
+import su.uTa4u.logistaeviae.LogistaeViae;
 
 // four points in order
 // 3 2
@@ -68,6 +69,26 @@ public final class Quad {
         this.vs[1] = v1;
         this.vs[2] = v2;
         this.vs[3] = v3;
+    }
+
+    public int packPos() {
+        int packedPos = 0;
+        for (int i = 0; i < VERTEX_COUNT; i++) {
+            float x = this.xs[i];
+            if (x == 0.0f) {
+                packedPos |= (0 << i);
+            } else if (x == 0.25f) {
+                packedPos |= (1 << i);
+            } else if (x == 0.75f) {
+                packedPos |= (2 << i);
+            } else if (x == 1.0f) {
+                packedPos |= (3 << i);
+            } else {
+                LogistaeViae.LOGGER.error("Unexpected x pos {} in quad: {}", x, this);
+                return 0;
+            }
+        }
+        return packedPos;
     }
 
     public float[] pack(BlockPos pos, float cx, float cy, float cz) {

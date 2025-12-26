@@ -10,13 +10,11 @@ import net.minecraft.client.renderer.culling.ICamera;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.apache.commons.io.IOUtils;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL33;
 import su.uTa4u.logistaeviae.Tags;
 import su.uTa4u.logistaeviae.client.model.PipeModelManager;
 import su.uTa4u.logistaeviae.client.model.Quad;
@@ -32,7 +30,6 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -89,28 +86,17 @@ public final class PipeInstancedRenderer {
         camera.setPosition(cameraX, cameraY, cameraZ);
 
         RenderGlobalAccessor renderGlobalAccessor = ((RenderGlobalAccessor) event.getContext());
-        
-        List<TileEntityPipe> toRender = new ArrayList<>();
+
+        Byte2ObjectMap<List<TileEntityPipe>> pipeByType = new Byte2ObjectArrayMap<>();
         for (RenderGlobal.ContainerLocalRenderInformation info : renderGlobalAccessor.getRenderInfos()) {
             for (TileEntity te : ((ContainerLocalRenderInformationAccessor) info).getRenderChunk().getCompiledChunk().getTileEntities()) {
                 if (te instanceof TileEntityPipe && camera.isBoundingBoxInFrustum(te.getRenderBoundingBox())) {
-                    toRender.add((TileEntityPipe) te);
+                    TileEntityPipe pipe = (TileEntityPipe) te;
+                    pipeByType.computeIfAbsent(pipe.packConnections(), k -> new ArrayList<>()).add(pipe);
                 }
             }
         }
-        if (toRender.isEmpty()) return;
-
-        int[] instanceCounts = new int[64];
-        for (TileEntityPipe te : toRender) {
-            byte packedConnections = te.packConnections();
-//            for (Quad quad : PipeModelManager.getQuadsForPipe(packedConnections).values()) {
-//                this.vertexBuffer.put(quad.pack(te.getPos(), (float) cameraX, (float) cameraY, (float) cameraZ)).flip();
-//                glDrawElements(GL_TRIANGLES, Quad.INDICES.length, GL_UNSIGNED_INT, 0);
-//            }
-            BlockPos pos = te.getPos();
-
-            instanceCounts[packedConnections] += 1;
-        }
+        if (pipeByType.isEmpty()) return;
 
         storeCommonGlStates();
         storeVertexObjects();
@@ -126,18 +112,35 @@ public final class PipeInstancedRenderer {
         GlStateManager.disableCull();
 
         glBindVertexArray(this.vao);
-        glBindBuffer(GL_ARRAY_BUFFER, this.instvbo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this.ebo);
+        glBindBuffer(GL_ARRAY_BUFFER, this.instvbo);
 
-        glBufferData(GL_ARRAY_BUFFER, this.vertexBuffer, GL_DYNAMIC_DRAW);
-        glDrawElementsInstancedBaseInstance(
-                GL_TRIANGLES,
-                (IntBuffer) BufferUtils.createIntBuffer(Quad.INDICES.length).put(Quad.INDICES).flip(),
-                instanceCounts[0],
-                0
-        );
+        for (Byte2ObjectMap.Entry<List<TileEntityPipe>> entry : pipeByType.byte2ObjectEntrySet()) {
+            List<TileEntityPipe> pipes = entry.getValue();
+            if (pipes.isEmpty()) continue;
+            byte packedConnections = entry.getByteKey();
 
-        this.vertexBuffer.clear();
+            this.vertexBuffer.clear();
+            for (TileEntityPipe pipe : pipes) {
+                BlockPos pos = pipe.getPos();
+                this.vertexBuffer.put((float) (pos.getX() - cameraX));
+                this.vertexBuffer.put((float) (pos.getY() - cameraY));
+                this.vertexBuffer.put((float) (pos.getZ() - cameraZ));
+                this.vertexBuffer.put(0.0f);
+                this.vertexBuffer.put(0.0f);
+            }
+            this.vertexBuffer.flip();
+            glBufferData(GL_ARRAY_BUFFER, this.vertexBuffer, GL_DYNAMIC_DRAW);
+
+            glDrawElementsInstancedBaseInstance(
+                    GL_TRIANGLES,
+                    Quad.INDICES.length,
+                    GL_UNSIGNED_INT,
+                    0L,
+                    pipes.size(),
+                    packedConnections * 72
+            );
+        }
 
         restoreProgram();
         restoreVertexObjects();
@@ -272,16 +275,12 @@ public final class PipeInstancedRenderer {
 
         this.baseInstancevbo = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, this.baseInstancevbo);
-        glVertexAttribPointer(0, 72, GL_FLOAT, false, 72 * Float.BYTES, 0);
+        glVertexAttribPointer(0, 72, GL_UNSIGNED_BYTE, false, 72, 0);
         glEnableVertexAttribArray(0);
         ByteBuffer baseInstances = BufferUtils.createByteBuffer(PipeModelManager.BASE_INSTANCE_COUNT * PipeModelManager.QUAD_COUNT * Quad.VERTEX_COUNT * Quad.POS_COUNT);
         for (byte b = 0; b < 64; b++) {
             for (Quad quad : PipeModelManager.getQuadsForPipe(b).values()) {
-                for (int i = 0; i < 4; i++) {
-                    baseInstances.putFloat(quad.xs[i]);
-                    baseInstances.putFloat(quad.ys[i]);
-                    baseInstances.putFloat(quad.zs[i]);
-                }
+                baseInstances.putInt(quad.packPos());
             }
         }
         baseInstances.flip();
@@ -291,9 +290,10 @@ public final class PipeInstancedRenderer {
         glBindBuffer(GL_ARRAY_BUFFER, this.instvbo);
         glVertexAttribPointer(1, 3, GL_FLOAT, false, 5 * Float.BYTES, 0);
         glEnableVertexAttribArray(1);
+        glVertexAttribDivisor(1, 1);
         glVertexAttribPointer(2, 2, GL_FLOAT, false, 5 * Float.BYTES, 3 * Float.BYTES);
         glEnableVertexAttribArray(2);
-        glVertexAttribDivisor(1, 1);
+        glVertexAttribDivisor(2, 1);
 
         this.ebo = glGenBuffers();
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this.ebo);
