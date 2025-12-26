@@ -44,78 +44,109 @@ public final class PipeModelManager {
         float vmin = tex.getMinV();
         float vmax = tex.getMaxV();
 
-        EnumMap<EnumFacing, Quad> center = getCenter(tex);
+        EnumMap<EnumFacing, Quad> model = getCenter(tex);
         pipe.forEachConnection((connection) -> {
+            Quad quad;
             switch (connection) {
                 case DOWN: {
                     // X and Z axis quads extend down
-                    center.get(EnumFacing.NORTH).extendDown(vmin);
-                    center.get(EnumFacing.SOUTH).extendDown(vmax);
-                    center.get(EnumFacing.WEST).extendDown(vmax);
-                    center.get(EnumFacing.EAST).extendDown(vmin);
+                    quad = model.get(EnumFacing.NORTH);
+                    quad.ys[0] = 0.0f;
+                    quad.ys[1] = 0.0f;
+                    quad = model.get(EnumFacing.SOUTH);
+                    quad.ys[0] = 0.0f;
+                    quad.ys[1] = 0.0f;
+                    quad = model.get(EnumFacing.WEST);
+                    quad.ys[0] = 0.0f;
+                    quad.ys[1] = 0.0f;
+                    quad = model.get(EnumFacing.EAST);
+                    quad.ys[0] = 0.0f;
+                    quad.ys[1] = 0.0f;
                     break;
                 }
                 case UP: {
                     // X and Z axis quads extend
-                    center.get(EnumFacing.NORTH).extendUp(vmax);
-                    center.get(EnumFacing.SOUTH).extendUp(vmin);
-                    center.get(EnumFacing.WEST).extendUp(vmin);
-                    center.get(EnumFacing.EAST).extendUp(vmax);
+                    quad = model.get(EnumFacing.NORTH);
+                    quad.ys[2] = 1.0f;
+                    quad.ys[3] = 1.0f;
+                    quad = model.get(EnumFacing.SOUTH);
+                    quad.ys[2] = 1.0f;
+                    quad.ys[3] = 1.0f;
+                    quad = model.get(EnumFacing.WEST);
+                    quad.ys[2] = 1.0f;
+                    quad.ys[3] = 1.0f;
+                    quad = model.get(EnumFacing.EAST);
+                    quad.ys[2] = 1.0f;
+                    quad.ys[3] = 1.0f;
                     break;
                 }
                 case NORTH: {
                     // Y and X axis quads extend north
-                    center.get(EnumFacing.DOWN).extendNorth(umin);
-                    center.get(EnumFacing.UP).extendNorth(umin);
-                    center.get(EnumFacing.WEST).extendNorth(umin);
-                    center.get(EnumFacing.EAST).extendNorth(umin);
+                    quad = model.get(EnumFacing.DOWN);
+                    quad.zs[0] = 0.0f;
+                    quad.zs[1] = 0.0f;
+                    quad = model.get(EnumFacing.UP);
+                    quad.zs[0] = 0.0f;
+                    quad.zs[1] = 0.0f;
+                    quad = model.get(EnumFacing.WEST);
+                    quad.zs[0] = 0.0f;
+                    quad.zs[3] = 0.0f;
+                    quad = model.get(EnumFacing.EAST);
+                    quad.zs[1] = 0.0f;
+                    quad.zs[2] = 0.0f;
                     break;
                 }
                 case SOUTH: {
                     // Y and X axis quads extend south
-                    center.get(EnumFacing.DOWN).extendSouth(umax);
-                    center.get(EnumFacing.UP).extendSouth(umax);
-                    center.get(EnumFacing.WEST).extendSouth(umax);
-                    center.get(EnumFacing.EAST).extendSouth(umax);
+                    quad = model.get(EnumFacing.DOWN);
+                    quad.zs[2] = 1.0f;
+                    quad.zs[3] = 1.0f;
+                    quad = model.get(EnumFacing.UP);
+                    quad.zs[2] = 1.0f;
+                    quad.zs[3] = 1.0f;
+                    quad = model.get(EnumFacing.WEST);
+                    quad.zs[1] = 1.0f;
+                    quad.zs[2] = 1.0f;
+                    quad = model.get(EnumFacing.EAST);
+                    quad.zs[0] = 1.0f;
+                    quad.zs[3] = 1.0f;
                     break;
                 }
                 case WEST: {
                     // Y and Z axis quads extend west
-                    // This is an edge case because my original idea failed :sob:
-                    Quad qd = center.get(EnumFacing.DOWN);
-                    qd.xs[2] = 0.0f;
-                    qd.xs[3] = 0.0f;
-                    qd.vs[2] = vmax;
-                    qd.vs[3] = vmax;
-                    Quad qu = center.get(EnumFacing.UP);
-                    qu.xs[2] = 0.0f;
-                    qu.xs[3] = 0.0f;
-                    qu.vs[2] = vmin;
-                    qu.vs[3] = vmin;
-                    center.get(EnumFacing.NORTH).extendWest(umax);
-                    center.get(EnumFacing.SOUTH).extendWest(umax);
+                    quad = model.get(EnumFacing.DOWN);
+                    quad.xs[0] = 0.0f;
+                    quad.xs[3] = 0.0f;
+                    quad = model.get(EnumFacing.UP);
+                    quad.xs[1] = 0.0f;
+                    quad.xs[2] = 0.0f;
+                    quad = model.get(EnumFacing.NORTH);
+                    quad.xs[1] = 0.0f;
+                    quad.xs[2] = 0.0f;
+                    quad = model.get(EnumFacing.SOUTH);
+                    quad.xs[0] = 0.0f;
+                    quad.xs[3] = 0.0f;
                     break;
                 }
                 case EAST: {
                     // Y and Z axis quads extend east
-                    // This is an edge case because my original idea failed :sob:
-                    Quad qd = center.get(EnumFacing.DOWN);
-                    qd.xs[0] = 1.0f;
-                    qd.xs[1] = 1.0f;
-                    qd.vs[0] = vmin;
-                    qd.vs[1] = vmin;
-                    Quad qu = center.get(EnumFacing.UP);
-                    qu.xs[0] = 1.0f;
-                    qu.xs[1] = 1.0f;
-                    qu.vs[0] = vmax;
-                    qu.vs[1] = vmax;
-                    center.get(EnumFacing.NORTH).extendEast(umin);
-                    center.get(EnumFacing.SOUTH).extendEast(umin);
+                    quad = model.get(EnumFacing.DOWN);
+                    quad.xs[1] = 1.0f;
+                    quad.xs[2] = 1.0f;
+                    quad = model.get(EnumFacing.UP);
+                    quad.xs[0] = 1.0f;
+                    quad.xs[3] = 1.0f;
+                    quad = model.get(EnumFacing.NORTH);
+                    quad.xs[0] = 1.0f;
+                    quad.xs[3] = 1.0f;
+                    quad = model.get(EnumFacing.SOUTH);
+                    quad.xs[1] = 1.0f;
+                    quad.xs[2] = 1.0f;
                     break;
                 }
             }
         });
-        return center;
+        return model;
     }
 
     private static EnumMap<EnumFacing, Quad> getCenter(TextureAtlasSprite tex) {
@@ -127,50 +158,50 @@ public final class PipeModelManager {
         EnumMap<EnumFacing, Quad> quads = new EnumMap<>(EnumFacing.class);
         quads.put(EnumFacing.DOWN,
                 new Quad(
-                        FROM, FROM, FROM, umin, vmax,
-                        TOOO, FROM, FROM, umin, vmin,
-                        TOOO, FROM, TOOO, umax, vmin,
-                        FROM, FROM, TOOO, umax, vmax
+                        FROM, FROM, FROM,
+                        TOOO, FROM, FROM,
+                        TOOO, FROM, TOOO,
+                        FROM, FROM, TOOO
                 )
         );
         quads.put(EnumFacing.UP,
                 new Quad(
-                        FROM, TOOO, TOOO, umax, vmin,
-                        TOOO, TOOO, TOOO, umax, vmax,
-                        TOOO, TOOO, FROM, umin, vmax,
-                        FROM, TOOO, FROM, umin, vmin
+                        TOOO, TOOO, FROM,
+                        FROM, TOOO, FROM,
+                        FROM, TOOO, TOOO,
+                        TOOO, TOOO, TOOO
                 )
         );
         quads.put(EnumFacing.NORTH,
                 new Quad(
-                        FROM, FROM, FROM, umax, vmin,
-                        TOOO, FROM, FROM, umin, vmin,
-                        TOOO, TOOO, FROM, umin, vmax,
-                        FROM, TOOO, FROM, umax, vmax
+                        TOOO, FROM, FROM,
+                        FROM, FROM, FROM,
+                        FROM, TOOO, FROM,
+                        TOOO, TOOO, FROM
                 )
         );
         quads.put(EnumFacing.SOUTH,
                 new Quad(
-                        FROM, TOOO, TOOO, umax, vmin,
-                        TOOO, TOOO, TOOO, umin, vmin,
-                        TOOO, FROM, TOOO, umin, vmax,
-                        FROM, FROM, TOOO, umax, vmax
+                        FROM, FROM, TOOO,
+                        TOOO, FROM, TOOO,
+                        TOOO, TOOO, TOOO,
+                        FROM, TOOO, TOOO
                 )
         );
         quads.put(EnumFacing.WEST,
                 new Quad(
-                        FROM, FROM, FROM, umin, vmax,
-                        FROM, TOOO, FROM, umin, vmin,
-                        FROM, TOOO, TOOO, umax, vmin,
-                        FROM, FROM, TOOO, umax, vmax
+                        FROM, FROM, FROM,
+                        FROM, FROM, TOOO,
+                        FROM, TOOO, TOOO,
+                        FROM, TOOO, FROM
                 )
         );
         quads.put(EnumFacing.EAST,
                 new Quad(
-                        TOOO, FROM, TOOO, umax, vmin,
-                        TOOO, TOOO, TOOO, umax, vmax,
-                        TOOO, TOOO, FROM, umin, vmax,
-                        TOOO, FROM, FROM, umin, vmin
+                        TOOO, FROM, TOOO,
+                        TOOO, FROM, FROM,
+                        TOOO, TOOO, FROM,
+                        TOOO, TOOO, TOOO
                 )
         );
         return quads;
