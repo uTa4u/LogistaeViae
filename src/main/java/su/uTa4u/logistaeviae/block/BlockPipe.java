@@ -123,6 +123,7 @@ public class BlockPipe extends Block implements ITileEntityProvider {
         return new TileEntityPipe();
     }
 
+    // TODO: can we have actually accurate AABBs?
     private static Byte2ObjectMap<AxisAlignedBB> generateAABBs() {
         Byte2ObjectMap<AxisAlignedBB> map = new Byte2ObjectArrayMap<>();
 
@@ -138,23 +139,28 @@ public class BlockPipe extends Block implements ITileEntityProvider {
         AxisAlignedBB west = new AxisAlignedBB(zero, from, from, from, tooo, tooo);
         AxisAlignedBB east = new AxisAlignedBB(tooo, from, from, onee, tooo, tooo);
 
-        for (byte i = 0; i < 64; i++) {
+        map.put((byte) 0, center);
+        for (byte i = 1; i < 64; i++) {
+            AxisAlignedBB aabb = new AxisAlignedBB(center.minX, center.minY, center.minZ, center.maxX, center.maxY, center.maxZ);
             if (((i >> EnumFacing.DOWN.getIndex()) & 1) == 1) {
-                map.put(i, center.union(down));
-            } else if (((i >> EnumFacing.UP.getIndex()) & 1) == 1) {
-                map.put(i, center.union(up));
-            } else if (((i >> EnumFacing.NORTH.getIndex()) & 1) == 1) {
-                map.put(i, center.union(north));
-            } else if (((i >> EnumFacing.SOUTH.getIndex()) & 1) == 1) {
-                map.put(i, center.union(south));
-            } else if (((i >> EnumFacing.WEST.getIndex()) & 1) == 1) {
-                map.put(i, center.union(west));
-            } else if (((i >> EnumFacing.EAST.getIndex()) & 1) == 1) {
-                map.put(i, center.union(east));
-            } else {
-                assert i == 0;
-                map.put(i, center);
+                aabb = aabb.union(down);
             }
+            if (((i >> EnumFacing.UP.getIndex()) & 1) == 1) {
+                aabb = aabb.union(up);
+            }
+            if (((i >> EnumFacing.NORTH.getIndex()) & 1) == 1) {
+                aabb = aabb.union(north);
+            }
+            if (((i >> EnumFacing.SOUTH.getIndex()) & 1) == 1) {
+                aabb = aabb.union(south);
+            }
+            if (((i >> EnumFacing.WEST.getIndex()) & 1) == 1) {
+                aabb = aabb.union(west);
+            }
+            if (((i >> EnumFacing.EAST.getIndex()) & 1) == 1) {
+                aabb = aabb.union(east);
+            }
+            map.put(i, aabb);
         }
 
         return map;

@@ -14,6 +14,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class PipeModelManager {
+    public static final int BASE_INSTANCE_COUNT = 64;
+    public static final int QUAD_COUNT = 6;
+
     private static final float FROM = 0.25f;
     private static final float TOOO = 0.75f;
 
