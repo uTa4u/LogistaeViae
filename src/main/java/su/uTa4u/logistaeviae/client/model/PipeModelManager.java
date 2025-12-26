@@ -10,8 +10,6 @@ import su.uTa4u.logistaeviae.block.BlockPipe;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Map;
 
 public final class PipeModelManager {
     public static final int BASE_INSTANCE_COUNT = 64;
@@ -21,30 +19,23 @@ public final class PipeModelManager {
     private static final float TOOO = 0.75f;
 
     // ArrayMap implementation should be fine for only 64 entries
-    private static final Map<TextureAtlasSprite, Byte2ObjectMap<EnumMap<EnumFacing, Quad>>> CACHE = new HashMap<>();
+    private static final Byte2ObjectMap<EnumMap<EnumFacing, Quad>> CACHE = new Byte2ObjectArrayMap<>();
 
     public static EnumMap<EnumFacing, Quad> getQuadsForPipe(TileEntityPipe pipe) {
+        byte packedConnections = pipe.packConnections();
+        if (!CACHE.containsKey(packedConnections)) {
+            CACHE.put(packedConnections, computeQuadsForPipe(pipe));
+        }
+        EnumMap<EnumFacing, Quad> model = CACHE.get(packedConnections);
         Block block = pipe.getWorld().getBlockState(pipe.getPos()).getBlock();
         if (!(block instanceof BlockPipe)) throw new RuntimeException("TileEntityPipe is not BlockPipe, WTF");
         TextureAtlasSprite tex = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(((BlockPipe) block).getTexture().toString());
-        if (!CACHE.containsKey(tex)) {
-            CACHE.put(tex, new Byte2ObjectArrayMap<>());
-        }
-        Byte2ObjectMap<EnumMap<EnumFacing, Quad>> map = CACHE.get(tex);
-        byte packedConnections = pipe.packConnections();
-        if (!map.containsKey(packedConnections)) {
-            map.put(packedConnections, computeQuadsForPipe(pipe, tex));
-        }
-        return map.get(packedConnections);
+        texture(model, tex);
+        return model;
     }
 
-    private static EnumMap<EnumFacing, Quad> computeQuadsForPipe(TileEntityPipe pipe, TextureAtlasSprite tex) {
-        float umin = tex.getMinU();
-        float umax = tex.getMaxU();
-        float vmin = tex.getMinV();
-        float vmax = tex.getMaxV();
-
-        EnumMap<EnumFacing, Quad> model = getCenter(tex);
+    private static EnumMap<EnumFacing, Quad> computeQuadsForPipe(TileEntityPipe pipe) {
+        EnumMap<EnumFacing, Quad> model = getCenter();
         pipe.forEachConnection((connection) -> {
             Quad quad;
             switch (connection) {
@@ -149,12 +140,7 @@ public final class PipeModelManager {
         return model;
     }
 
-    private static EnumMap<EnumFacing, Quad> getCenter(TextureAtlasSprite tex) {
-        float umin = tex.getInterpolatedU(4);
-        float umax = tex.getInterpolatedU(12);
-        float vmin = tex.getInterpolatedV(4);
-        float vmax = tex.getInterpolatedV(12);
-
+    private static EnumMap<EnumFacing, Quad> getCenter() {
         EnumMap<EnumFacing, Quad> quads = new EnumMap<>(EnumFacing.class);
         quads.put(EnumFacing.DOWN,
                 new Quad(
@@ -205,6 +191,61 @@ public final class PipeModelManager {
                 )
         );
         return quads;
+    }
+
+    private static void texture(EnumMap<EnumFacing, Quad> model, TextureAtlasSprite tex) {
+        float umin;
+        float umax;
+        float vmin;
+        float vmax;
+        for (EnumFacing dir : EnumFacing.VALUES) {
+            Quad quad = model.get(dir);
+            switch (dir) {
+                case DOWN:
+                    umin = tex.getInterpolatedU(16 * (1 - quad.xs[1]));
+                    umax = tex.getInterpolatedU(16 * (1 - quad.xs[0]));
+                    vmin = tex.getInterpolatedV(16 * quad.zs[0]);
+                    vmax = tex.getInterpolatedV(16 * quad.zs[3]);
+                    break;
+                case UP:
+                    umin = tex.getInterpolatedU(16 * (1 - quad.xs[0]));
+                    umax = tex.getInterpolatedU(16 * (1 - quad.xs[1]));
+                    vmin = tex.getInterpolatedV(16 * quad.zs[0]);
+                    vmax = tex.getInterpolatedV(16 * quad.zs[3]);
+                    break;
+                case NORTH:
+                    umin = tex.getInterpolatedU(16 * (1 - quad.xs[0]));
+                    umax = tex.getInterpolatedU(16 * (1 - quad.xs[1]));
+                    vmin = tex.getInterpolatedV(16 * quad.ys[0]);
+                    vmax = tex.getInterpolatedV(16 * quad.ys[3]);
+                    break;
+                case SOUTH:
+                    umin = tex.getInterpolatedU(16 * quad.xs[0]);
+                    umax = tex.getInterpolatedU(16 * quad.xs[1]);
+                    vmin = tex.getInterpolatedV(16 * quad.ys[0]);
+                    vmax = tex.getInterpolatedV(16 * quad.ys[3]);
+                    break;
+                case WEST:
+                    umin = tex.getInterpolatedU(16 * quad.zs[0]);
+                    umax = tex.getInterpolatedU(16 * quad.zs[1]);
+                    vmin = tex.getInterpolatedV(16 * quad.ys[0]);
+                    vmax = tex.getInterpolatedV(16 * quad.ys[3]);
+                    break;
+                case EAST:
+                    umin = tex.getInterpolatedU(16 * (1 - quad.zs[0]));
+                    umax = tex.getInterpolatedU(16 * (1 - quad.zs[1]));
+                    vmin = tex.getInterpolatedV(16 * quad.ys[0]);
+                    vmax = tex.getInterpolatedV(16 * quad.ys[3]);
+                    break;
+                default: throw new IllegalStateException("Unknown EnumFacing value!");
+            }
+            quad.texture(
+                    umin, vmin,
+                    umax, vmin,
+                    umax, vmax,
+                    umin, vmax
+            );
+        }
     }
 
     private PipeModelManager() {

@@ -54,7 +54,7 @@ public final class Quad {
         this.vs = new float[4];
     }
 
-    public Quad texture(
+    public void texture(
             float u0, float v0,
             float u1, float v1,
             float u2, float v2,
@@ -68,7 +68,6 @@ public final class Quad {
         this.vs[1] = v1;
         this.vs[2] = v2;
         this.vs[3] = v3;
-        return this;
     }
 
     public float[] pack(BlockPos pos, float cx, float cy, float cz) {
