@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import su.uTa4u.logistaeviae.LogistaeViae;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 @Mixin(RenderChunk.class)
@@ -22,7 +23,7 @@ public abstract class RenderChunkMixin {
             )
     )
     private void logistaeviea_rebuildChunk(float x, float y, float z, ChunkCompileTaskGenerator generator, CallbackInfo ci, @Local CompiledChunk compiledchunk, @Local TileEntity tileentity) {
-        if (tileentity instanceof TileEntityPipe) {
+        if (LogistaeViae.IS_INSTANCED_RENDERING && tileentity instanceof TileEntityPipe) {
             compiledchunk.addTileEntity(tileentity);
         }
     }

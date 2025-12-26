@@ -86,7 +86,7 @@ public abstract class ModelLoaderMixin {
             texturedPipeModel.name = modelLoc.toString();
             texturedPipeModel.parent = basePipeModel.parent;
             try {
-                stateModels.put(
+                this.stateModels.put(
                         new ModelResourceLocation(regName, "inventory"),
                         (IModel) VANILLA_MODEL_WRAPPER_CTOR.newInstance(modelLoader, modelLoc, texturedPipeModel, false, DEFAULT_BLOCK_ANIMATION)
                 );

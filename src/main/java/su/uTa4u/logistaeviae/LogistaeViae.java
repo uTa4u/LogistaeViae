@@ -20,6 +20,8 @@ import su.uTa4u.logistaeviae.proxy.IProxy;
 public final class LogistaeViae {
     public static final Logger LOGGER = LogManager.getLogger(Tags.MOD_NAME);
 
+    public static final boolean IS_INSTANCED_RENDERING = true;
+
     @SidedProxy(clientSide = "su.uTa4u.logistaeviae.proxy.ClientProxy", serverSide = "su.uTa4u.logistaeviae.proxy.ServerProxy")
     private static IProxy proxy;
 
@@ -40,6 +42,8 @@ public final class LogistaeViae {
 
     @EventBusSubscriber(value = Side.CLIENT)
     private static final class ClientEventHandler {
+        private ClientEventHandler() {
+        }
 
         @SubscribeEvent
         public static void onTextureStitchPre(TextureStitchEvent.Pre event) {
