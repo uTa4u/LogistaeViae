@@ -13,7 +13,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.client.model.animation.FastTESR;
 import su.uTa4u.logistaeviae.client.model.PipeModelManager;
-import su.uTa4u.logistaeviae.client.model.Quad;
+import su.uTa4u.logistaeviae.client.model.PipeQuad;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 import javax.annotation.Nonnull;
@@ -31,7 +31,7 @@ public final class TileEntityPipeRenderer extends FastTESR<TileEntityPipe> {
         int skyLight = (light >> 16) & 0xFFFF;
         int blockLight = light & 0xFFFF;
 
-        for (Quad quad : PipeModelManager.getTexturedQuadsForPipe(pipe).values()) {
+        for (PipeQuad quad : PipeModelManager.getTexturedQuadsForPipe(pipe).values()) {
             putPipeQuad(buffer, quad, x, y, z, skyLight, blockLight);
         }
 
@@ -62,14 +62,14 @@ public final class TileEntityPipeRenderer extends FastTESR<TileEntityPipe> {
 
     }
 
-    private static void putPipeQuad(BufferBuilder buffer, Quad quad, double wx, double wy, double wz, int skyLight, int blockLight) {
+    private static void putPipeQuad(BufferBuilder buffer, PipeQuad quad, double wx, double wy, double wz, int skyLight, int blockLight) {
         VertexFormat bufferFormat = buffer.getVertexFormat();
         if (bufferFormat != DefaultVertexFormats.BLOCK) {
             throw new IllegalStateException("Expected DefaultVertexFormats.BLOCK for buffer, but got " + bufferFormat);
         }
 
         for (int i = 0; i < 4; i++) {
-            buffer.pos(quad.xs[i] + wx, quad.ys[i] + wy, quad.zs[i] + wz);
+            buffer.pos(quad.getX(i) + wx, quad.getY(i) + wy, quad.getZ(i) + wz);
             buffer.color(0xFF, 0xFF, 0xFF, 0xFF);
             buffer.tex(quad.us[i], quad.vs[i]);
             buffer.lightmap(skyLight, blockLight);

@@ -17,7 +17,7 @@ import org.apache.commons.io.IOUtils;
 import org.lwjgl.BufferUtils;
 import su.uTa4u.logistaeviae.Tags;
 import su.uTa4u.logistaeviae.client.model.PipeModelManager;
-import su.uTa4u.logistaeviae.client.model.Quad;
+import su.uTa4u.logistaeviae.client.model.PipeQuad;
 import su.uTa4u.logistaeviae.mixin.ActiveRenderInfoAccessor;
 import su.uTa4u.logistaeviae.mixin.ContainerLocalRenderInformationAccessor;
 import su.uTa4u.logistaeviae.mixin.RenderGlobalAccessor;
@@ -66,7 +66,7 @@ public final class PipeInstancedRenderer {
     private final FloatBuffer vertexBuffer;
     private final int program;
     private final int vao;
-    private final int baseInstancevbo;
+//    private final int baseInstancevbo;
     private final int instvbo;
     private final int ebo;
     private final int projMatrixUniformLoc;
@@ -134,7 +134,7 @@ public final class PipeInstancedRenderer {
 
             glDrawElementsInstancedBaseInstance(
                     GL_TRIANGLES,
-                    Quad.INDICES.length,
+                    PipeQuad.INDICES.length,
                     GL_UNSIGNED_INT,
                     0L,
                     pipes.size(),
@@ -221,7 +221,7 @@ public final class PipeInstancedRenderer {
 
     private PipeInstancedRenderer() {
         this.floatBuffer = BufferUtils.createFloatBuffer(16);
-        this.vertexBuffer = BufferUtils.createFloatBuffer(Quad.VERTEX_COUNT * Quad.VERTEX_LENGHT);
+        this.vertexBuffer = BufferUtils.createFloatBuffer(PipeQuad.VERTEX_COUNT * PipeQuad.VERTEX_LENGHT);
 
         this.program = glCreateProgram();
         if (this.program == 0) {
@@ -273,18 +273,20 @@ public final class PipeInstancedRenderer {
         this.vao = glGenVertexArrays();
         glBindVertexArray(this.vao);
 
-        this.baseInstancevbo = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, this.baseInstancevbo);
-        glVertexAttribPointer(0, 72, GL_UNSIGNED_BYTE, false, 72, 0);
-        glEnableVertexAttribArray(0);
-        ByteBuffer baseInstances = BufferUtils.createByteBuffer(PipeModelManager.BASE_INSTANCE_COUNT * PipeModelManager.QUAD_COUNT * Quad.VERTEX_COUNT * Quad.POS_COUNT);
-        for (byte b = 0; b < 64; b++) {
-            for (Quad quad : PipeModelManager.getQuadsForPipe(b).values()) {
-                baseInstances.putInt(quad.packPos());
-            }
-        }
-        baseInstances.flip();
-        glBufferData(GL_ARRAY_BUFFER, baseInstances, GL_STATIC_DRAW);
+//        ByteBuffer baseInstances = BufferUtils.createByteBuffer(PipeModelManager.BASE_INSTANCE_COUNT * PipeModelManager.QUAD_COUNT * PipeQuad.VERTEX_COUNT * PipeQuad.POS_COUNT);
+//        this.baseInstancevbo = glGenBuffers();
+//        glBindBuffer(GL_ARRAY_BUFFER, this.baseInstancevbo);
+//        glVertexAttribPointer(0, baseInstances.capacity(), GL_UNSIGNED_BYTE, false, baseInstances.capacity(), 0);
+//        glEnableVertexAttribArray(0);
+//        for (byte b = 0; b < 64; b++) {
+//            for (PipeQuad quad : PipeModelManager.getQuadsForPipe(b).values()) {
+//                baseInstances.put(quad.xs);
+//                baseInstances.put(quad.ys);
+//                baseInstances.put(quad.zs);
+//            }
+//        }
+//        baseInstances.flip();
+//        glBufferData(GL_ARRAY_BUFFER, baseInstances, GL_STATIC_DRAW);
 
         this.instvbo = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, this.instvbo);
@@ -299,7 +301,7 @@ public final class PipeInstancedRenderer {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this.ebo);
         glBufferData(
                 GL_ELEMENT_ARRAY_BUFFER,
-                (IntBuffer) BufferUtils.createIntBuffer(Quad.INDICES.length).put(Quad.INDICES).flip(),
+                (IntBuffer) BufferUtils.createIntBuffer(PipeQuad.INDICES.length).put(PipeQuad.INDICES).flip(),
                 GL_STATIC_DRAW
         );
 

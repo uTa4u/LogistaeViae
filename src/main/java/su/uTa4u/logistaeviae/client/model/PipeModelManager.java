@@ -16,14 +16,11 @@ public final class PipeModelManager {
     public static final int BASE_INSTANCE_COUNT = 64;
     public static final int QUAD_COUNT = 6;
 
-    private static final float FROM = 0.25f;
-    private static final float TOOO = 0.75f;
-
     // ArrayMap implementation should be fine for only 64 entries
-    private static final Byte2ObjectMap<EnumMap<EnumFacing, Quad>> CACHE = new Byte2ObjectArrayMap<>();
+    private static final Byte2ObjectMap<EnumMap<EnumFacing, PipeQuad>> CACHE = new Byte2ObjectArrayMap<>();
 
-    public static EnumMap<EnumFacing, Quad> getTexturedQuadsForPipe(TileEntityPipe pipe) {
-        EnumMap<EnumFacing, Quad> model = getQuadsForPipe(pipe.packConnections());
+    public static EnumMap<EnumFacing, PipeQuad> getTexturedQuadsForPipe(TileEntityPipe pipe) {
+        EnumMap<EnumFacing, PipeQuad> model = getQuadsForPipe(pipe.packConnections());
 
         Block block = pipe.getWorld().getBlockState(pipe.getPos()).getBlock();
         if (!(block instanceof BlockPipe)) throw new RuntimeException("TileEntityPipe is not BlockPipe, WTF");
@@ -32,113 +29,113 @@ public final class PipeModelManager {
         return model;
     }
 
-    public static EnumMap<EnumFacing, Quad> getQuadsForPipe(byte packedConnections) {
+    public static EnumMap<EnumFacing, PipeQuad> getQuadsForPipe(byte packedConnections) {
         if (!CACHE.containsKey(packedConnections)) {
             CACHE.put(packedConnections, computeQuadsForPipe(packedConnections));
         }
         return CACHE.get(packedConnections);
     }
 
-    private static EnumMap<EnumFacing, Quad> computeQuadsForPipe(byte packedConnections) {
-        EnumMap<EnumFacing, Quad> model = getCenter();
+    private static EnumMap<EnumFacing, PipeQuad> computeQuadsForPipe(byte packedConnections) {
+        EnumMap<EnumFacing, PipeQuad> model = getCenter();
 
         for (EnumFacing connection : TileEntityPipe.unpackConnections(packedConnections)) {
-            Quad quad;
+            PipeQuad quad;
             switch (connection) {
                 case DOWN: {
                     // X and Z axis quads extend down
                     quad = model.get(EnumFacing.NORTH);
-                    quad.ys[0] = 0.0f;
-                    quad.ys[1] = 0.0f;
+                    quad.putY(0, PipeQuad.POS_0_00);
+                    quad.putY(1, PipeQuad.POS_0_00);
                     quad = model.get(EnumFacing.SOUTH);
-                    quad.ys[0] = 0.0f;
-                    quad.ys[1] = 0.0f;
+                    quad.putY(0, PipeQuad.POS_0_00);
+                    quad.putY(1, PipeQuad.POS_0_00);
                     quad = model.get(EnumFacing.WEST);
-                    quad.ys[0] = 0.0f;
-                    quad.ys[1] = 0.0f;
+                    quad.putY(0, PipeQuad.POS_0_00);
+                    quad.putY(1, PipeQuad.POS_0_00);
                     quad = model.get(EnumFacing.EAST);
-                    quad.ys[0] = 0.0f;
-                    quad.ys[1] = 0.0f;
+                    quad.putY(0, PipeQuad.POS_0_00);
+                    quad.putY(1, PipeQuad.POS_0_00);
                     break;
                 }
                 case UP: {
                     // X and Z axis quads extend
                     quad = model.get(EnumFacing.NORTH);
-                    quad.ys[2] = 1.0f;
-                    quad.ys[3] = 1.0f;
+                    quad.putY(2, PipeQuad.POS_1_00);
+                    quad.putY(3, PipeQuad.POS_1_00);
                     quad = model.get(EnumFacing.SOUTH);
-                    quad.ys[2] = 1.0f;
-                    quad.ys[3] = 1.0f;
+                    quad.putY(2, PipeQuad.POS_1_00);
+                    quad.putY(3, PipeQuad.POS_1_00);
                     quad = model.get(EnumFacing.WEST);
-                    quad.ys[2] = 1.0f;
-                    quad.ys[3] = 1.0f;
+                    quad.putY(2, PipeQuad.POS_1_00);
+                    quad.putY(3, PipeQuad.POS_1_00);
                     quad = model.get(EnumFacing.EAST);
-                    quad.ys[2] = 1.0f;
-                    quad.ys[3] = 1.0f;
+                    quad.putY(2, PipeQuad.POS_1_00);
+                    quad.putY(3, PipeQuad.POS_1_00);
                     break;
                 }
                 case NORTH: {
                     // Y and X axis quads extend north
                     quad = model.get(EnumFacing.DOWN);
-                    quad.zs[0] = 0.0f;
-                    quad.zs[1] = 0.0f;
+                    quad.putZ(0, PipeQuad.POS_0_00);
+                    quad.putZ(1, PipeQuad.POS_0_00);
                     quad = model.get(EnumFacing.UP);
-                    quad.zs[0] = 0.0f;
-                    quad.zs[1] = 0.0f;
+                    quad.putZ(0, PipeQuad.POS_0_00);
+                    quad.putZ(1, PipeQuad.POS_0_00);
                     quad = model.get(EnumFacing.WEST);
-                    quad.zs[0] = 0.0f;
-                    quad.zs[3] = 0.0f;
+                    quad.putZ(0, PipeQuad.POS_0_00);
+                    quad.putZ(3, PipeQuad.POS_0_00);
                     quad = model.get(EnumFacing.EAST);
-                    quad.zs[1] = 0.0f;
-                    quad.zs[2] = 0.0f;
+                    quad.putZ(1, PipeQuad.POS_0_00);
+                    quad.putZ(2, PipeQuad.POS_0_00);
                     break;
                 }
                 case SOUTH: {
                     // Y and X axis quads extend south
                     quad = model.get(EnumFacing.DOWN);
-                    quad.zs[2] = 1.0f;
-                    quad.zs[3] = 1.0f;
+                    quad.putZ(2, PipeQuad.POS_1_00);
+                    quad.putZ(3, PipeQuad.POS_1_00);
                     quad = model.get(EnumFacing.UP);
-                    quad.zs[2] = 1.0f;
-                    quad.zs[3] = 1.0f;
+                    quad.putZ(2, PipeQuad.POS_1_00);
+                    quad.putZ(3, PipeQuad.POS_1_00);
                     quad = model.get(EnumFacing.WEST);
-                    quad.zs[1] = 1.0f;
-                    quad.zs[2] = 1.0f;
+                    quad.putZ(1, PipeQuad.POS_1_00);
+                    quad.putZ(2, PipeQuad.POS_1_00);
                     quad = model.get(EnumFacing.EAST);
-                    quad.zs[0] = 1.0f;
-                    quad.zs[3] = 1.0f;
+                    quad.putZ(0, PipeQuad.POS_1_00);
+                    quad.putZ(3, PipeQuad.POS_1_00);
                     break;
                 }
                 case WEST: {
                     // Y and Z axis quads extend west
                     quad = model.get(EnumFacing.DOWN);
-                    quad.xs[0] = 0.0f;
-                    quad.xs[3] = 0.0f;
+                    quad.putX(0, PipeQuad.POS_0_00);
+                    quad.putX(3, PipeQuad.POS_0_00);
                     quad = model.get(EnumFacing.UP);
-                    quad.xs[1] = 0.0f;
-                    quad.xs[2] = 0.0f;
+                    quad.putX(1, PipeQuad.POS_0_00);
+                    quad.putX(2, PipeQuad.POS_0_00);
                     quad = model.get(EnumFacing.NORTH);
-                    quad.xs[1] = 0.0f;
-                    quad.xs[2] = 0.0f;
+                    quad.putX(1, PipeQuad.POS_0_00);
+                    quad.putX(2, PipeQuad.POS_0_00);
                     quad = model.get(EnumFacing.SOUTH);
-                    quad.xs[0] = 0.0f;
-                    quad.xs[3] = 0.0f;
+                    quad.putX(0, PipeQuad.POS_0_00);
+                    quad.putX(3, PipeQuad.POS_0_00);
                     break;
                 }
                 case EAST: {
                     // Y and Z axis quads extend east
                     quad = model.get(EnumFacing.DOWN);
-                    quad.xs[1] = 1.0f;
-                    quad.xs[2] = 1.0f;
+                    quad.putX(1, PipeQuad.POS_1_00);
+                    quad.putX(2, PipeQuad.POS_1_00);
                     quad = model.get(EnumFacing.UP);
-                    quad.xs[0] = 1.0f;
-                    quad.xs[3] = 1.0f;
+                    quad.putX(0, PipeQuad.POS_1_00);
+                    quad.putX(3, PipeQuad.POS_1_00);
                     quad = model.get(EnumFacing.NORTH);
-                    quad.xs[0] = 1.0f;
-                    quad.xs[3] = 1.0f;
+                    quad.putX(0, PipeQuad.POS_1_00);
+                    quad.putX(3, PipeQuad.POS_1_00);
                     quad = model.get(EnumFacing.SOUTH);
-                    quad.xs[1] = 1.0f;
-                    quad.xs[2] = 1.0f;
+                    quad.putX(1, PipeQuad.POS_1_00);
+                    quad.putX(2, PipeQuad.POS_1_00);
                     break;
                 }
             }
@@ -146,104 +143,104 @@ public final class PipeModelManager {
         return model;
     }
 
-    private static EnumMap<EnumFacing, Quad> getCenter() {
-        EnumMap<EnumFacing, Quad> quads = new EnumMap<>(EnumFacing.class);
+    private static EnumMap<EnumFacing, PipeQuad> getCenter() {
+        EnumMap<EnumFacing, PipeQuad> quads = new EnumMap<>(EnumFacing.class);
         quads.put(EnumFacing.DOWN,
-                new Quad(
-                        FROM, FROM, FROM,
-                        TOOO, FROM, FROM,
-                        TOOO, FROM, TOOO,
-                        FROM, FROM, TOOO
+                new PipeQuad(
+                        PipeQuad.POS_0_25, PipeQuad.POS_0_25, PipeQuad.POS_0_25,
+                        PipeQuad.POS_0_75, PipeQuad.POS_0_25, PipeQuad.POS_0_25,
+                        PipeQuad.POS_0_75, PipeQuad.POS_0_25, PipeQuad.POS_0_75,
+                        PipeQuad.POS_0_25, PipeQuad.POS_0_25, PipeQuad.POS_0_75
                 )
         );
         quads.put(EnumFacing.UP,
-                new Quad(
-                        TOOO, TOOO, FROM,
-                        FROM, TOOO, FROM,
-                        FROM, TOOO, TOOO,
-                        TOOO, TOOO, TOOO
+                new PipeQuad(
+                        PipeQuad.POS_0_75, PipeQuad.POS_0_75, PipeQuad.POS_0_25,
+                        PipeQuad.POS_0_25, PipeQuad.POS_0_75, PipeQuad.POS_0_25,
+                        PipeQuad.POS_0_25, PipeQuad.POS_0_75, PipeQuad.POS_0_75,
+                        PipeQuad.POS_0_75, PipeQuad.POS_0_75, PipeQuad.POS_0_75
                 )
         );
         quads.put(EnumFacing.NORTH,
-                new Quad(
-                        TOOO, FROM, FROM,
-                        FROM, FROM, FROM,
-                        FROM, TOOO, FROM,
-                        TOOO, TOOO, FROM
+                new PipeQuad(
+                        PipeQuad.POS_0_75, PipeQuad.POS_0_25, PipeQuad.POS_0_25,
+                        PipeQuad.POS_0_25, PipeQuad.POS_0_25, PipeQuad.POS_0_25,
+                        PipeQuad.POS_0_25, PipeQuad.POS_0_75, PipeQuad.POS_0_25,
+                        PipeQuad.POS_0_75, PipeQuad.POS_0_75, PipeQuad.POS_0_25
                 )
         );
         quads.put(EnumFacing.SOUTH,
-                new Quad(
-                        FROM, FROM, TOOO,
-                        TOOO, FROM, TOOO,
-                        TOOO, TOOO, TOOO,
-                        FROM, TOOO, TOOO
+                new PipeQuad(
+                        PipeQuad.POS_0_25, PipeQuad.POS_0_25, PipeQuad.POS_0_75,
+                        PipeQuad.POS_0_75, PipeQuad.POS_0_25, PipeQuad.POS_0_75,
+                        PipeQuad.POS_0_75, PipeQuad.POS_0_75, PipeQuad.POS_0_75,
+                        PipeQuad.POS_0_25, PipeQuad.POS_0_75, PipeQuad.POS_0_75
                 )
         );
         quads.put(EnumFacing.WEST,
-                new Quad(
-                        FROM, FROM, FROM,
-                        FROM, FROM, TOOO,
-                        FROM, TOOO, TOOO,
-                        FROM, TOOO, FROM
+                new PipeQuad(
+                        PipeQuad.POS_0_25, PipeQuad.POS_0_25, PipeQuad.POS_0_25,
+                        PipeQuad.POS_0_25, PipeQuad.POS_0_25, PipeQuad.POS_0_75,
+                        PipeQuad.POS_0_25, PipeQuad.POS_0_75, PipeQuad.POS_0_75,
+                        PipeQuad.POS_0_25, PipeQuad.POS_0_75, PipeQuad.POS_0_25
                 )
         );
         quads.put(EnumFacing.EAST,
-                new Quad(
-                        TOOO, FROM, TOOO,
-                        TOOO, FROM, FROM,
-                        TOOO, TOOO, FROM,
-                        TOOO, TOOO, TOOO
+                new PipeQuad(
+                        PipeQuad.POS_0_75, PipeQuad.POS_0_25, PipeQuad.POS_0_75,
+                        PipeQuad.POS_0_75, PipeQuad.POS_0_25, PipeQuad.POS_0_25,
+                        PipeQuad.POS_0_75, PipeQuad.POS_0_75, PipeQuad.POS_0_25,
+                        PipeQuad.POS_0_75, PipeQuad.POS_0_75, PipeQuad.POS_0_75
                 )
         );
         return quads;
     }
 
     // These are not technically correct UV coords, some are flipped
-    private static void texture(EnumMap<EnumFacing, Quad> model, ResourceLocation texLoc) {
+    private static void texture(EnumMap<EnumFacing, PipeQuad> model, ResourceLocation texLoc) {
         TextureAtlasSprite tex = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(texLoc.toString());
         float umin;
         float umax;
         float vmin;
         float vmax;
         for (EnumFacing dir : EnumFacing.VALUES) {
-            Quad quad = model.get(dir);
+            PipeQuad quad = model.get(dir);
             switch (dir) {
                 case DOWN:
-                    umin = tex.getInterpolatedU(16 * (1 - quad.xs[0]));
-                    umax = tex.getInterpolatedU(16 * (1 - quad.xs[1]));
-                    vmin = tex.getInterpolatedV(16 * quad.zs[0]);
-                    vmax = tex.getInterpolatedV(16 * quad.zs[3]);
+                    umin = tex.getInterpolatedU(16 * (1 - quad.getX(0)));
+                    umax = tex.getInterpolatedU(16 * (1 - quad.getX(1)));
+                    vmin = tex.getInterpolatedV(16 * quad.getZ(0));
+                    vmax = tex.getInterpolatedV(16 * quad.getZ(3));
                     break;
                 case UP:
-                    umin = tex.getInterpolatedU(16 * quad.xs[0]);
-                    umax = tex.getInterpolatedU(16 * quad.xs[1]);
-                    vmin = tex.getInterpolatedV(16 * quad.zs[0]);
-                    vmax = tex.getInterpolatedV(16 * quad.zs[3]);
+                    umin = tex.getInterpolatedU(16 * quad.getX(0));
+                    umax = tex.getInterpolatedU(16 * quad.getX(1));
+                    vmin = tex.getInterpolatedV(16 * quad.getZ(0));
+                    vmax = tex.getInterpolatedV(16 * quad.getZ(3));
                     break;
                 case NORTH:
-                    umin = tex.getInterpolatedU(16 * (1 - quad.xs[0]));
-                    umax = tex.getInterpolatedU(16 * (1 - quad.xs[1]));
-                    vmin = tex.getInterpolatedV(16 * quad.ys[0]);
-                    vmax = tex.getInterpolatedV(16 * quad.ys[3]);
+                    umin = tex.getInterpolatedU(16 * (1 - quad.getX(0)));
+                    umax = tex.getInterpolatedU(16 * (1 - quad.getX(1)));
+                    vmin = tex.getInterpolatedV(16 * quad.getY(0));
+                    vmax = tex.getInterpolatedV(16 * quad.getY(3));
                     break;
                 case SOUTH:
-                    umin = tex.getInterpolatedU(16 * quad.xs[0]);
-                    umax = tex.getInterpolatedU(16 * quad.xs[1]);
-                    vmin = tex.getInterpolatedV(16 * quad.ys[0]);
-                    vmax = tex.getInterpolatedV(16 * quad.ys[3]);
+                    umin = tex.getInterpolatedU(16 * quad.getX(0));
+                    umax = tex.getInterpolatedU(16 * quad.getX(1));
+                    vmin = tex.getInterpolatedV(16 * quad.getY(0));
+                    vmax = tex.getInterpolatedV(16 * quad.getY(3));
                     break;
                 case WEST:
-                    umin = tex.getInterpolatedU(16 * (1 - quad.zs[0]));
-                    umax = tex.getInterpolatedU(16 * (1 - quad.zs[1]));
-                    vmin = tex.getInterpolatedV(16 * quad.ys[0]);
-                    vmax = tex.getInterpolatedV(16 * quad.ys[3]);
+                    umin = tex.getInterpolatedU(16 * (1 - quad.getZ(0)));
+                    umax = tex.getInterpolatedU(16 * (1 - quad.getZ(1)));
+                    vmin = tex.getInterpolatedV(16 * quad.getY(0));
+                    vmax = tex.getInterpolatedV(16 * quad.getY(3));
                     break;
                 case EAST:
-                    umin = tex.getInterpolatedU(16 * quad.zs[0]);
-                    umax = tex.getInterpolatedU(16 * quad.zs[1]);
-                    vmin = tex.getInterpolatedV(16 * quad.ys[0]);
-                    vmax = tex.getInterpolatedV(16 * quad.ys[3]);
+                    umin = tex.getInterpolatedU(16 * quad.getZ(0));
+                    umax = tex.getInterpolatedU(16 * quad.getZ(1));
+                    vmin = tex.getInterpolatedV(16 * quad.getY(0));
+                    vmax = tex.getInterpolatedV(16 * quad.getY(3));
                     break;
                 default:
                     throw new IllegalStateException("Unknown EnumFacing value!");

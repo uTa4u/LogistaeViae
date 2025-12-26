@@ -5,6 +5,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import su.uTa4u.logistaeviae.LogistaeViae;
 import su.uTa4u.logistaeviae.client.render.PipeInstancedRenderer;
 
 @Mixin(Minecraft.class)
@@ -19,6 +20,8 @@ public abstract class MinecraftMixin {
     )
     private void logistaeviea_initRendererInstance(CallbackInfo ci) {
         // Idk why this is required, but thanks to Nali it works
-        PipeInstancedRenderer.initInstance();
+        if (LogistaeViae.IS_INSTANCED_RENDERING) {
+            PipeInstancedRenderer.initInstance();
+        }
     }
 }
