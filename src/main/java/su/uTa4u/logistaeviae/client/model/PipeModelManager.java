@@ -26,10 +26,12 @@ public final class PipeModelManager {
         if (!CACHE.containsKey(packedConnections)) {
             CACHE.put(packedConnections, computeQuadsForPipe(pipe));
         }
-        EnumMap<EnumFacing, Quad> model = CACHE.get(packedConnections);
+
         Block block = pipe.getWorld().getBlockState(pipe.getPos()).getBlock();
         if (!(block instanceof BlockPipe)) throw new RuntimeException("TileEntityPipe is not BlockPipe, WTF");
         TextureAtlasSprite tex = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(((BlockPipe) block).getTexture().toString());
+
+        EnumMap<EnumFacing, Quad> model = CACHE.get(packedConnections);
         texture(model, tex);
         return model;
     }
@@ -193,6 +195,7 @@ public final class PipeModelManager {
         return quads;
     }
 
+    // These are not technically correct UV coords, some are flipped
     private static void texture(EnumMap<EnumFacing, Quad> model, TextureAtlasSprite tex) {
         float umin;
         float umax;
@@ -202,14 +205,14 @@ public final class PipeModelManager {
             Quad quad = model.get(dir);
             switch (dir) {
                 case DOWN:
-                    umin = tex.getInterpolatedU(16 * (1 - quad.xs[1]));
-                    umax = tex.getInterpolatedU(16 * (1 - quad.xs[0]));
+                    umin = tex.getInterpolatedU(16 * (1 - quad.xs[0]));
+                    umax = tex.getInterpolatedU(16 * (1 - quad.xs[1]));
                     vmin = tex.getInterpolatedV(16 * quad.zs[0]);
                     vmax = tex.getInterpolatedV(16 * quad.zs[3]);
                     break;
                 case UP:
-                    umin = tex.getInterpolatedU(16 * (1 - quad.xs[0]));
-                    umax = tex.getInterpolatedU(16 * (1 - quad.xs[1]));
+                    umin = tex.getInterpolatedU(16 * quad.xs[0]);
+                    umax = tex.getInterpolatedU(16 * quad.xs[1]);
                     vmin = tex.getInterpolatedV(16 * quad.zs[0]);
                     vmax = tex.getInterpolatedV(16 * quad.zs[3]);
                     break;
@@ -226,14 +229,14 @@ public final class PipeModelManager {
                     vmax = tex.getInterpolatedV(16 * quad.ys[3]);
                     break;
                 case WEST:
-                    umin = tex.getInterpolatedU(16 * quad.zs[0]);
-                    umax = tex.getInterpolatedU(16 * quad.zs[1]);
+                    umin = tex.getInterpolatedU(16 * (1 - quad.zs[0]));
+                    umax = tex.getInterpolatedU(16 * (1 - quad.zs[1]));
                     vmin = tex.getInterpolatedV(16 * quad.ys[0]);
                     vmax = tex.getInterpolatedV(16 * quad.ys[3]);
                     break;
                 case EAST:
-                    umin = tex.getInterpolatedU(16 * (1 - quad.zs[0]));
-                    umax = tex.getInterpolatedU(16 * (1 - quad.zs[1]));
+                    umin = tex.getInterpolatedU(16 * quad.zs[0]);
+                    umax = tex.getInterpolatedU(16 * quad.zs[1]);
                     vmin = tex.getInterpolatedV(16 * quad.ys[0]);
                     vmax = tex.getInterpolatedV(16 * quad.ys[3]);
                     break;
