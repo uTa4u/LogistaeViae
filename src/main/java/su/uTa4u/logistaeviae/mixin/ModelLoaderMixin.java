@@ -43,6 +43,7 @@ public abstract class ModelLoaderMixin {
             )
     )
     private void logistaeviae_loadPipeModel(CallbackInfo ci) {
+        // TODO: try using AT for this later
         if (VANILLA_MODEL_WRAPPER_CTOR == null) {
             try {
                 VANILLA_MODEL_WRAPPER_CTOR = Class.forName("net.minecraftforge.client.model.ModelLoader$VanillaModelWrapper").getDeclaredConstructor(ModelLoader.class, ResourceLocation.class, ModelBlock.class, boolean.class, ModelBlockAnimation.class);

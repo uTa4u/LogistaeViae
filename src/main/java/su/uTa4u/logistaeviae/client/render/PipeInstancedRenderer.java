@@ -3,13 +3,12 @@ package su.uTa4u.logistaeviae.client.render;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderGlobal;
-import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.culling.ICamera;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -18,8 +17,8 @@ import org.lwjgl.BufferUtils;
 import su.uTa4u.logistaeviae.Tags;
 import su.uTa4u.logistaeviae.client.model.PipeModelManager;
 import su.uTa4u.logistaeviae.client.model.Quad;
+import su.uTa4u.logistaeviae.mixin.ActiveRenderInfoAccessor;
 import su.uTa4u.logistaeviae.mixin.ContainerLocalRenderInformationAccessor;
-import su.uTa4u.logistaeviae.mixin.EntityRendererAccessor;
 import su.uTa4u.logistaeviae.mixin.RenderGlobalAccessor;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
@@ -38,20 +37,13 @@ import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
 // Thanks tttsaurus for https://github.com/tttsaurus/Mc122RenderBook
-
 // TODO: don't autosub this class to event, sub from ClientProxy only if GL4+ is available
 @EventBusSubscriber
 public final class PipeInstancedRenderer {
-    private static final float[] IDENTITY_MATRIX = new float[]{
-            1.0f, 0.0f, 0.0f, 0.0f,
-            0.0f, 1.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 1.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 1.0f
-    };
     // Taken from org.lwjgl.opengl.APIUtil
     private static final int BUFFERS_SIZE = 32;
-    private static final IntBuffer intBuffer = BufferUtils.createIntBuffer(BUFFERS_SIZE);
-    private static final FloatBuffer floatBuffer = BufferUtils.createFloatBuffer(BUFFERS_SIZE);
+    private static final IntBuffer INT_BUFFER = BufferUtils.createIntBuffer(BUFFERS_SIZE);
+    private static final FloatBuffer FLOAT_BUFFER = BufferUtils.createFloatBuffer(BUFFERS_SIZE);
 
     private static int textureID;
     private static int shadeModel;
@@ -71,12 +63,11 @@ public final class PipeInstancedRenderer {
     private static int prevVbo;
     private static int prevEbo;
 
+    private static final FloatBuffer vertexBuffer = BufferUtils.createFloatBuffer(Quad.VERTEX_COUNT * Quad.VERTEX_LENGHT);
     private static final int program;
     private static final int vao;
     private static final int vbo;
     private static final int ebo;
-    private static final FloatBuffer projMatrix = BufferUtils.createFloatBuffer(16);
-    private static final FloatBuffer viewMatrix = BufferUtils.createFloatBuffer(16);
     private static final int projMatrixUniformLoc;
     private static final int viewMatrixUniformLoc;
 
@@ -112,35 +103,15 @@ public final class PipeInstancedRenderer {
 
         glUseProgram(program);
 
-        EntityRendererAccessor entityRendererAccessor = ((EntityRendererAccessor) mc.entityRenderer);
         renderGlobalAccessor.getRenderEngine().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-        // FIXME: generate launch scripts and launch in renderdoc
-        // FIXME: generate launch scripts and launch in renderdoc
-        // FIXME: generate launch scripts and launch in renderdoc
-        //        this shit might not be needed
 
-        RenderHelper.disableStandardItemLighting();
-        GlStateManager.blendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        GlStateManager.enableBlend();
+        glUniformMatrix4(projMatrixUniformLoc, false, ActiveRenderInfoAccessor.getProjMatrix());
+        glUniformMatrix4(viewMatrixUniformLoc, false, ActiveRenderInfoAccessor.getViewMatrix());
+
         GlStateManager.disableCull();
-        if (Minecraft.isAmbientOcclusionEnabled()) GlStateManager.shadeModel(GL_SMOOTH);
-        else GlStateManager.shadeModel(GL_FLAT);
-
-        updateProjMatrix(entityRendererAccessor.callGetFOVModifier((float) partialTicks, true), (float) mc.displayWidth / mc.displayHeight, entityRendererAccessor.getFarPlaneDistance() * MathHelper.SQRT_2);
-        glUniformMatrix4(projMatrixUniformLoc, false, projMatrix);
-
-        updateViewMatrix(entity, (float) partialTicks);
-        glUniformMatrix4(viewMatrixUniformLoc, false, viewMatrix);
 
         glBindVertexArray(vao);
-
-        FloatBuffer vertexBuffer = ByteBuffer.allocateDirect(Quad.VERTEX_COUNT * Quad.VERTEX_LENGHT * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
-
-        IntBuffer indexBuffer = ByteBuffer.allocateDirect(Quad.INDICES.length * Integer.BYTES).order(ByteOrder.nativeOrder()).asIntBuffer();
-        indexBuffer.put(Quad.INDICES).flip();
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer, GL_STATIC_DRAW);
 
         for (RenderGlobal.ContainerLocalRenderInformation info : renderGlobalAccessor.getRenderInfos()) {
             for (TileEntity tileEntity : ((ContainerLocalRenderInformationAccessor) info).getRenderChunk().getCompiledChunk().getTileEntities()) {
@@ -149,108 +120,30 @@ public final class PipeInstancedRenderer {
 
                 for (Quad quad : PipeModelManager.getQuadsForPipe((TileEntityPipe) tileEntity).values()) {
                     vertexBuffer.put(quad.pack(tileEntity.getPos(), (float) cameraX, (float) cameraY, (float) cameraZ)).flip();
-                    glBufferData(GL_ARRAY_BUFFER, vertexBuffer, GL_STATIC_DRAW);
+                    glBufferData(GL_ARRAY_BUFFER, vertexBuffer, GL_DYNAMIC_DRAW);
                     glDrawElements(GL_TRIANGLES, Quad.INDICES.length, GL_UNSIGNED_INT, 0);
                     vertexBuffer.clear();
                 }
             }
         }
 
-        RenderHelper.enableStandardItemLighting();
-
         restoreProgram();
         restoreVertexObjects();
         restoreCommonGlStates();
     }
 
-    private static void makeIdentity(FloatBuffer matrix) {
-        int pos = matrix.position();
-        matrix.put(IDENTITY_MATRIX);
-        matrix.position(pos);
-    }
-
-    // Taken from org.lwjgl.util.glu.Project#gluPerspective
-    private static void updateProjMatrix(float fovy, float aspect, float zFar) {
-        projMatrix.clear();
-
-        final float zNear = 0.05f;
-        float sine, cotangent, deltaZ;
-        float radians = fovy / 2 * (float) Math.PI / 180;
-
-        deltaZ = zFar - zNear;
-        sine = (float) Math.sin(radians);
-
-        if ((deltaZ == 0) || (sine == 0) || (aspect == 0)) {
-            return;
-        }
-
-        cotangent = (float) Math.cos(radians) / sine;
-
-        makeIdentity(projMatrix);
-
-        projMatrix.put(0 * 4 + 0, cotangent / aspect);
-        projMatrix.put(1 * 4 + 1, cotangent);
-        projMatrix.put(2 * 4 + 2, -(zFar + zNear) / deltaZ);
-        projMatrix.put(2 * 4 + 3, -1);
-        projMatrix.put(3 * 4 + 2, -2 * zNear * zFar / deltaZ);
-        projMatrix.put(3 * 4 + 3, 0);
-
-        projMatrix.flip();
-    }
-
-    private static void updateViewMatrix(Entity camera, float partialTicks) {
-        viewMatrix.clear();
-
-        // This is already calculated in parent methods, but whatever I guess
-        float x = (float) (camera.prevPosX + (camera.posX - camera.prevPosX) * partialTicks);
-        float y = (float) (camera.prevPosY + (camera.posY - camera.prevPosY) * partialTicks);
-        float z = (float) (camera.prevPosZ + (camera.posZ - camera.prevPosZ) * partialTicks);
-
-        float yawRad = (float) Math.toRadians(camera.rotationYaw);
-        float pitchRad = (float) Math.toRadians(camera.rotationPitch);
-
-        float cosYaw = (float) Math.cos(yawRad);
-        float sinYaw = (float) Math.sin(yawRad);
-        float cosPitch = (float) Math.cos(pitchRad);
-        float sinPitch = (float) Math.sin(pitchRad);
-
-        makeIdentity(viewMatrix);
-
-        viewMatrix.put(cosYaw);
-        viewMatrix.put(sinYaw * sinPitch);
-        viewMatrix.put(sinYaw * cosPitch);
-        viewMatrix.put(0.0f);
-
-        viewMatrix.put(0.0f);
-        viewMatrix.put(cosPitch);
-        viewMatrix.put(-sinPitch);
-        viewMatrix.put(0.0f);
-
-        viewMatrix.put(-sinYaw);
-        viewMatrix.put(cosYaw * sinPitch);
-        viewMatrix.put(cosYaw * cosPitch);
-        viewMatrix.put(0.0f);
-
-        viewMatrix.put(-(cosYaw * x - sinYaw * z));
-        viewMatrix.put(-(sinYaw * sinPitch * x + cosPitch * y + cosYaw * sinPitch * z));
-        viewMatrix.put(-(sinYaw * cosPitch * x - sinPitch * y + cosYaw * cosPitch * z));
-        viewMatrix.put(1.0f);
-
-        viewMatrix.flip();
-    }
-
     private static void storeCommonGlStates() {
-        glGetInteger(GL_TEXTURE_BINDING_2D, intBuffer);
-        textureID = intBuffer.get(0);
+        glGetInteger(GL_TEXTURE_BINDING_2D, INT_BUFFER);
+        textureID = INT_BUFFER.get(0);
 
-        glGetFloat(GL_CURRENT_COLOR, floatBuffer);
-        r = floatBuffer.get(0);
-        g = floatBuffer.get(1);
-        b = floatBuffer.get(2);
-        a = floatBuffer.get(3);
+        glGetFloat(GL_CURRENT_COLOR, FLOAT_BUFFER);
+        r = FLOAT_BUFFER.get(0);
+        g = FLOAT_BUFFER.get(1);
+        b = FLOAT_BUFFER.get(2);
+        a = FLOAT_BUFFER.get(3);
 
-        glGetInteger(GL_SHADE_MODEL, intBuffer);
-        shadeModel = intBuffer.get(0);
+        glGetInteger(GL_SHADE_MODEL, INT_BUFFER);
+        shadeModel = INT_BUFFER.get(0);
 
         blend = glIsEnabled(GL_BLEND);
         lighting = glIsEnabled(GL_LIGHTING);
@@ -367,8 +260,25 @@ public final class PipeInstancedRenderer {
 
         ebo = glGenBuffers();
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glBufferData(
+                GL_ELEMENT_ARRAY_BUFFER,
+                (IntBuffer) BufferUtils.createIntBuffer(Quad.INDICES.length).put(Quad.INDICES).flip(),
+                GL_STATIC_DRAW
+        );
 
         restoreVertexObjects();
+    }
+
+    private static final class RenderInfo {
+        private final int x;
+        private final int y;
+        private final int z;
+
+        private RenderInfo(BlockPos pos) {
+            this.x = pos.getX();
+            this.y = pos.getY();
+            this.z = pos.getZ();
+        }
     }
 
 }

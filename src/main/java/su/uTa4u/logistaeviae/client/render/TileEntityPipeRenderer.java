@@ -42,6 +42,7 @@ public final class TileEntityPipeRenderer extends FastTESR<TileEntityPipe> {
             putPipeQuad(buffer, quad, x, y, z, skyLight, blockLight);
         }
 
+        /*
         IBakedModel model = Minecraft.getMinecraft().getRenderItem().getItemModelMesher().getItemModel(new ItemStack(pipe.item));
 
         if (model instanceof BakedItemModel) {
@@ -64,6 +65,7 @@ public final class TileEntityPipeRenderer extends FastTESR<TileEntityPipe> {
             //       those would need to be rendered by minecraft's mechanisms,
             //       but I think rendering non isGui3d items as flat texture and blocks as a simple cube is good
         }
+         */
 
     }
 

@@ -9,5 +9,5 @@
         "PerspectiveMapWrapperAccessor"
     ],
     "server": [],
-    "client": ["BlockModelShapesMixin", "ContainerLocalRenderInformationAccessor", "EntityRendererAccessor", "ModelLoaderMixin", "RenderChunkMixin", "RenderGlobalAccessor"]
+    "client": ["ActiveRenderInfoAccessor", "BlockModelShapesMixin", "ContainerLocalRenderInformationAccessor", "ModelLoaderMixin", "RenderChunkMixin", "RenderGlobalAccessor"]
 }
