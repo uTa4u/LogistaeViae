@@ -20,6 +20,7 @@ public final class PipeModelManager {
     private static final float TOOO = 0.75f;
 
     // ArrayMap implementation should be fine for only 64 entries
+    // TODO: just precompute this, no need to cache
     private static final Byte2ObjectMap<EnumMap<EnumFacing, PipeQuad>> CACHE = new Byte2ObjectArrayMap<>();
 
     public static EnumMap<EnumFacing, PipeQuad> getTexturedQuadsForPipe(TileEntityPipe pipe) {

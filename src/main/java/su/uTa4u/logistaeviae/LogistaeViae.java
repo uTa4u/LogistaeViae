@@ -20,6 +20,8 @@ import su.uTa4u.logistaeviae.proxy.IProxy;
 public final class LogistaeViae {
     public static final Logger LOGGER = LogManager.getLogger(Tags.MOD_NAME);
 
+    // TODO: put this in a config option
+    //       use GLContext.getCapabilities().OpenGL42 to check for required opengl version
     public static final boolean IS_INSTANCED_RENDERING = true;
 
     @SidedProxy(clientSide = "su.uTa4u.logistaeviae.proxy.ClientProxy", serverSide = "su.uTa4u.logistaeviae.proxy.ServerProxy")

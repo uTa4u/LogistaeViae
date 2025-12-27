@@ -32,12 +32,10 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL11.glGetInteger;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
@@ -48,25 +46,7 @@ import static org.lwjgl.opengl.GL42.glDrawElementsInstancedBaseInstance;
 public final class PipeInstancedRenderer {
     public static PipeInstancedRenderer instance;
 
-    // TODO move all of this opengl saving shit into a separate class
-    private final FloatBuffer floatBuffer;
-    private int textureID;
-    private int shadeModel;
-    private float r;
-    private float g;
-    private float b;
-    private float a;
-    private boolean blend;
-    private boolean lighting;
-    private boolean texture2D;
-    private boolean alphaTest;
-    private boolean depthTest;
-    private boolean cullFace;
-
-    private int prevProgram;
-    private int prevVao;
-    private int prevVbo;
-    private int prevEbo;
+    private final OpenGLSaver glsaver;
 
     private final FloatBuffer vertexBuffer;
     private final int program;
@@ -104,9 +84,9 @@ public final class PipeInstancedRenderer {
         }
         if (pipeByType.isEmpty()) return;
 
-        storeCommonGlStates();
-        storeVertexObjects();
-        storeProgram();
+        this.glsaver.storeCommonGlStates();
+        this.glsaver.storeVertexObjects();
+        this.glsaver.storeProgram();
 
         glUseProgram(this.program);
 
@@ -153,72 +133,9 @@ public final class PipeInstancedRenderer {
             );
         }
 
-        restoreProgram();
-        restoreVertexObjects();
-        restoreCommonGlStates();
-    }
-
-    private void storeCommonGlStates() {
-        this.textureID = glGetInteger(GL_TEXTURE_BINDING_2D);
-
-        glGetFloat(GL_CURRENT_COLOR, this.floatBuffer);
-        this.r = this.floatBuffer.get(0);
-        this.g = this.floatBuffer.get(1);
-        this.b = this.floatBuffer.get(2);
-        this.a = this.floatBuffer.get(3);
-
-        this.shadeModel = glGetInteger(GL_SHADE_MODEL);
-
-        this.blend = glIsEnabled(GL_BLEND);
-        this.lighting = glIsEnabled(GL_LIGHTING);
-        this.texture2D = glIsEnabled(GL_TEXTURE_2D);
-        this.alphaTest = glIsEnabled(GL_ALPHA_TEST);
-        this.depthTest = glIsEnabled(GL_DEPTH_TEST);
-        this.cullFace = glIsEnabled(GL_CULL_FACE);
-    }
-
-    private void restoreCommonGlStates() {
-        GlStateManager.bindTexture(this.textureID);
-        GlStateManager.color(this.r, this.g, this.b, this.a);
-        GlStateManager.shadeModel(this.shadeModel);
-
-        if (this.blend) GlStateManager.enableBlend();
-        else GlStateManager.disableBlend();
-
-        if (this.lighting) GlStateManager.enableLighting();
-        else GlStateManager.disableLighting();
-
-        if (this.texture2D) GlStateManager.enableTexture2D();
-        else GlStateManager.disableTexture2D();
-
-        if (this.alphaTest) GlStateManager.enableAlpha();
-        else GlStateManager.disableAlpha();
-
-        if (this.depthTest) GlStateManager.enableDepth();
-        else GlStateManager.disableDepth();
-
-        if (this.cullFace) GlStateManager.enableCull();
-        else GlStateManager.disableCull();
-    }
-
-    private void storeVertexObjects() {
-        this.prevVao = glGetInteger(GL_VERTEX_ARRAY_BINDING);
-        this.prevVbo = glGetInteger(GL_ARRAY_BUFFER_BINDING);
-        this.prevEbo = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING);
-    }
-
-    private void restoreVertexObjects() {
-        glBindVertexArray(this.prevVao);
-        glBindBuffer(GL_ARRAY_BUFFER, this.prevVbo);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this.prevEbo);
-    }
-
-    private void storeProgram() {
-        this.prevProgram = glGetInteger(GL_CURRENT_PROGRAM);
-    }
-
-    private void restoreProgram() {
-        glUseProgram(this.prevProgram);
+        this.glsaver.restoreProgram();
+        this.glsaver.restoreVertexObjects();
+        this.glsaver.restoreCommonGlStates();
     }
 
     private String getShaderSource(String name) {
@@ -231,8 +148,10 @@ public final class PipeInstancedRenderer {
     }
 
     private PipeInstancedRenderer() {
-        this.floatBuffer = BufferUtils.createFloatBuffer(16);
-        this.vertexBuffer = BufferUtils.createFloatBuffer(1024 * (PipeQuad.POS_COUNT + 4)); // 4 for uv bounds
+        this.glsaver = new OpenGLSaver();
+        // FIXME: batch rendering to always fit inside the buffer
+        // TODO: try indirect rendering, watch vid by that lady about it first
+        this.vertexBuffer = BufferUtils.createFloatBuffer(20480 * (PipeQuad.POS_COUNT + 4)); // 4 for uv bounds
 
         this.program = glCreateProgram();
         if (this.program == 0) {
@@ -279,7 +198,7 @@ public final class PipeInstancedRenderer {
             throw new RuntimeException("Could not create uniform: " + viewMatrixUniformName + " in shader program " + this.program);
         }
 
-        storeVertexObjects();
+        this.glsaver.storeVertexObjects();
 
         this.vao = glGenVertexArrays();
         glBindVertexArray(this.vao);
@@ -331,7 +250,7 @@ public final class PipeInstancedRenderer {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this.ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer, GL_STATIC_DRAW);
 
-        restoreVertexObjects();
+        this.glsaver.restoreVertexObjects();
     }
 
     public static void initInstance() {
