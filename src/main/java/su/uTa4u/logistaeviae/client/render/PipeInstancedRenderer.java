@@ -5,15 +5,13 @@ import it.unimi.dsi.fastutil.bytes.Byte2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ByteArrayMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.culling.Frustum;
-import net.minecraft.client.renderer.culling.ICamera;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.entity.Entity;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3i;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -24,7 +22,6 @@ import su.uTa4u.logistaeviae.block.ModBlocks;
 import su.uTa4u.logistaeviae.client.model.PipeModelManager;
 import su.uTa4u.logistaeviae.client.model.PipeQuad;
 import su.uTa4u.logistaeviae.mixin.ActiveRenderInfoAccessor;
-import su.uTa4u.logistaeviae.mixin.ContainerLocalRenderInformationAccessor;
 import su.uTa4u.logistaeviae.mixin.RenderGlobalAccessor;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
@@ -35,6 +32,7 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,6 +49,8 @@ public final class PipeInstancedRenderer {
 
     private final OpenGLSaver glsaver;
 
+    private final Byte2ObjectMap<List<TileEntityPipe>> pipeByType;
+    private final Map<Vec3i, List<TileEntityPipe>> pipesInChunk;
     private final ByteBuffer vertexBuffer;
     private final FloatBuffer textureBuffer;
     private final Object2ByteArrayMap<TextureAtlasSprite> textureIDs;
@@ -71,7 +71,7 @@ public final class PipeInstancedRenderer {
         TextureMap textureMap = mc.getTextureMapBlocks();
 
         double partialTicks = event.getPartialTicks();
-        ICamera camera = new Frustum();
+        Frustum camera = new Frustum();
         double cameraX = entity.lastTickPosX + (entity.posX - entity.lastTickPosX) * partialTicks;
         double cameraY = entity.lastTickPosY + (entity.posY - entity.lastTickPosY) * partialTicks;
         double cameraZ = entity.lastTickPosZ + (entity.posZ - entity.lastTickPosZ) * partialTicks;
@@ -79,16 +79,20 @@ public final class PipeInstancedRenderer {
 
         RenderGlobalAccessor renderGlobalAccessor = ((RenderGlobalAccessor) event.getContext());
 
-        Byte2ObjectMap<List<TileEntityPipe>> pipeByType = new Byte2ObjectArrayMap<>();
-        for (RenderGlobal.ContainerLocalRenderInformation info : renderGlobalAccessor.getRenderInfos()) {
-            for (TileEntity te : ((ContainerLocalRenderInformationAccessor) info).getRenderChunk().getCompiledChunk().getTileEntities()) {
-                if (te instanceof TileEntityPipe && camera.isBoundingBoxInFrustum(te.getRenderBoundingBox())) {
-                    TileEntityPipe pipe = (TileEntityPipe) te;
-                    pipeByType.computeIfAbsent(pipe.packConnections(), k -> new ArrayList<>()).add(pipe);
+        long startTime = System.nanoTime();
+        for (Map.Entry<Vec3i, List<TileEntityPipe>> entry : this.pipesInChunk.entrySet()) {
+            Vec3i cpos = entry.getKey();
+            int cx = cpos.getX() * 16;
+            int cy = cpos.getY() * 16;
+            int cz = cpos.getZ() * 16;
+            if (camera.isBoxInFrustum(cx, cy, cz, cx + 16, cy + 16, cz + 16)) {
+                for (TileEntityPipe pipe : entry.getValue()) {
+                    this.pipeByType.get(pipe.packConnections()).add(pipe);
                 }
             }
         }
-        if (pipeByType.isEmpty()) return;
+        long collectTime = System.nanoTime() - startTime;
+        if (this.pipeByType.isEmpty()) return;
 
         this.glsaver.storeCommonGlStates();
         this.glsaver.storeVertexObjects();
@@ -105,8 +109,9 @@ public final class PipeInstancedRenderer {
 
         glBindVertexArray(this.vao);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this.ebo);
+        glBindBuffer(GL_ARRAY_BUFFER, this.instvbo);
 
-        for (Byte2ObjectMap.Entry<List<TileEntityPipe>> entry : pipeByType.byte2ObjectEntrySet()) {
+        for (Byte2ObjectMap.Entry<List<TileEntityPipe>> entry : this.pipeByType.byte2ObjectEntrySet()) {
             List<TileEntityPipe> pipes = entry.getValue();
             if (pipes.isEmpty()) continue;
             byte packedConnections = entry.getByteKey();
@@ -120,20 +125,19 @@ public final class PipeInstancedRenderer {
                 this.vertexBuffer.put(this.textureIDs.getByte(textureMap.getAtlasSprite(PipeModelManager.getTextureLoc(pipe))));
             }
             this.vertexBuffer.flip();
-            glBindBuffer(GL_ARRAY_BUFFER, this.instvbo);
             glBufferData(GL_ARRAY_BUFFER, this.vertexBuffer, GL_DYNAMIC_DRAW);
-
-            final int indicesPerPipe = PipeQuad.INDEX_COUNT * PipeModelManager.QUAD_COUNT;
 
             glDrawElementsInstancedBaseInstance(
                     GL_TRIANGLES,
-                    indicesPerPipe,
+                    PipeQuad.INDEX_COUNT * PipeModelManager.QUAD_COUNT,
                     GL_UNSIGNED_INT,
-                    (long) packedConnections * indicesPerPipe * Integer.BYTES,
+                    (long) packedConnections * PipeQuad.INDEX_COUNT * PipeModelManager.QUAD_COUNT * Integer.BYTES,
                     pipes.size(),
                     0
             );
         }
+
+        this.pipeByType.forEach((b, list) -> list.clear());
 
         this.glsaver.restoreProgram();
         this.glsaver.restoreVertexObjects();
@@ -151,13 +155,20 @@ public final class PipeInstancedRenderer {
 
     private PipeInstancedRenderer() {
         this.glsaver = new OpenGLSaver();
-        // FIXME: batch rendering to always fit inside the buffer
+        // TODO: batch rendering to always fit inside the buffer
         // TODO: try indirect rendering, watch vid by that lady about it first
-        //       when using indirect rendering we can pass chunk coords in SSBO and use 4 bit per coord (0-15) here
+        // TODO: when using indirect rendering we can pass chunk coords in SSBO and use 4 bit per coord (0-15) here
         this.vertexBuffer = BufferUtils.createByteBuffer(20480 * (PipeQuad.POS_COUNT * Float.BYTES + 1)); // + 1 byte for texture id
         // Using 1/4 of maximum uniform size here (4kB), can extend if really have to
         this.textureBuffer = BufferUtils.createFloatBuffer(ModBlocks.PIPES.size() * 4); // 4 texture uv bounds
         this.textureIDs = new Object2ByteArrayMap<>();
+
+        this.pipeByType = new Byte2ObjectArrayMap<>();
+        for (byte i = 0; i < PipeModelManager.BASE_INSTANCE_COUNT; i++) {
+            this.pipeByType.put(i, new ArrayList<>());
+        }
+
+        this.pipesInChunk = new HashMap<>();
 
         this.program = glCreateProgram();
         if (this.program == 0) {
@@ -286,6 +297,14 @@ public final class PipeInstancedRenderer {
         glUseProgram(this.program);
         glUniform4(this.texBufferUniformLoc, this.textureBuffer);
         this.glsaver.restoreProgram();
+    }
+
+    public void addPipe(int x, int y, int z, TileEntityPipe te) {
+        this.pipesInChunk.computeIfAbsent(new Vec3i(x, y, z), k -> new ArrayList<>()).add(te);
+    }
+
+    public void removePipe(int x, int y, int z, TileEntityPipe te) {
+        this.pipesInChunk.computeIfAbsent(new Vec3i(x, y, z), k -> new ArrayList<>()).remove(te);
     }
 
     public static void initInstance() {
