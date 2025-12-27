@@ -21,6 +21,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import su.uTa4u.logistaeviae.Tags;
+import su.uTa4u.logistaeviae.client.model.PipeModelManager;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 import javax.annotation.Nonnull;
@@ -141,7 +142,7 @@ public class BlockPipe extends Block implements ITileEntityProvider {
         AxisAlignedBB east = new AxisAlignedBB(tooo, from, from, onee, tooo, tooo);
 
         map.put((byte) 0, center);
-        for (byte i = 1; i < 64; i++) {
+        for (byte i = 1; i < PipeModelManager.BASE_INSTANCE_COUNT; i++) {
             AxisAlignedBB aabb = new AxisAlignedBB(center.minX, center.minY, center.minZ, center.maxX, center.maxY, center.maxZ);
             if (((i >> EnumFacing.DOWN.getIndex()) & 1) == 1) {
                 aabb = aabb.union(down);

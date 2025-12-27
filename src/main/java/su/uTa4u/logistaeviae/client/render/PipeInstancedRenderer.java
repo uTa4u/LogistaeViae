@@ -217,7 +217,7 @@ public final class PipeInstancedRenderer {
 
         int quadCount = PipeModelManager.BASE_INSTANCE_COUNT * PipeModelManager.QUAD_COUNT;
         ByteBuffer baseInstances = BufferUtils.createByteBuffer(quadCount * PipeQuad.VERTEX_COUNT * (1 + PipeQuad.POS_COUNT * Float.BYTES));
-        for (byte i = 0; i < 64; i++) {
+        for (byte i = 0; i < PipeModelManager.BASE_INSTANCE_COUNT; i++) {
             for (Map.Entry<EnumFacing, PipeQuad> entry : PipeModelManager.getQuadsForPipe(i).entrySet()) {
                 byte faceIndex = (byte) entry.getKey().getIndex();
                 PipeQuad quad = entry.getValue();

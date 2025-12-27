@@ -22,6 +22,8 @@ public class ClientProxy implements IProxy {
         ModBlocks.registerRender();
         if (LogistaeViae.IS_INSTANCED_RENDERING) {
             MinecraftForge.EVENT_BUS.register(PipeInstancedRenderer.instance);
+            // TextureStitchEvent.Post doesn't run for the initial resource load, so we need to do this once initially
+            // or maybe it does but I subscribe too late or something idk
             PipeInstancedRenderer.instance.reloadTextureBuffer(Minecraft.getMinecraft().getTextureMapBlocks());
         } else {
             ClientRegistry.bindTileEntitySpecialRenderer(TileEntityPipe.class, new TileEntityPipeRenderer());

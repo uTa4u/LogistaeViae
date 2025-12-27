@@ -11,6 +11,8 @@ import su.uTa4u.logistaeviae.block.BlockPipe;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class PipeModelManager {
     public static final int BASE_INSTANCE_COUNT = 64;
@@ -19,29 +21,33 @@ public final class PipeModelManager {
     private static final float FROM = 0.25f;
     private static final float TOOO = 0.75f;
 
-    // ArrayMap implementation should be fine for only 64 entries
-    // TODO: just precompute this, no need to cache
-    private static final Byte2ObjectMap<EnumMap<EnumFacing, PipeQuad>> CACHE = new Byte2ObjectArrayMap<>();
+    private static final Byte2ObjectMap<EnumMap<EnumFacing, PipeQuad>> MODEL_BY_CONNECTIONS = new Byte2ObjectArrayMap<>();
+    private static final Map<TextureAtlasSprite, EnumMap<EnumFacing, PipeQuad>> CACHE = new HashMap<>();
 
-    public static EnumMap<EnumFacing, PipeQuad> getTexturedQuadsForPipe(TileEntityPipe pipe) {
-        EnumMap<EnumFacing, PipeQuad> model = getQuadsForPipe(pipe.packConnections());
-
-        texture(model, getTextureLoc(pipe));
-
-        return model;
+    static {
+        for (byte i = 0; i < BASE_INSTANCE_COUNT; i++) {
+            MODEL_BY_CONNECTIONS.put(i, computeQuadsForPipe(i));
+        }
     }
 
-    public static String getTextureLoc(TileEntityPipe pipe) {
-        Block block = pipe.getWorld().getBlockState(pipe.getPos()).getBlock();
-        if (!(block instanceof BlockPipe)) throw new RuntimeException("TileEntityPipe is not BlockPipe, WTF");
-        return ((BlockPipe) block).getTexture().toString();
+    public static EnumMap<EnumFacing, PipeQuad> getTexturedQuadsForPipe(TileEntityPipe pipe) {
+        TextureAtlasSprite tex = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(getTextureLoc(pipe));
+        if (!CACHE.containsKey(tex)) {
+            EnumMap<EnumFacing, PipeQuad> model = getQuadsForPipe(pipe.packConnections());
+            // Need deep copy
+            EnumMap<EnumFacing, PipeQuad> modelCopy = new EnumMap<>(EnumFacing.class);
+            for (Map.Entry<EnumFacing, PipeQuad> entry : model.entrySet()) {
+                modelCopy.put(entry.getKey(), PipeQuad.withSamePos(entry.getValue()));
+            }
+            texture(modelCopy, tex);
+            CACHE.put(tex, modelCopy);
+        }
+
+        return CACHE.get(tex);
     }
 
     public static EnumMap<EnumFacing, PipeQuad> getQuadsForPipe(byte packedConnections) {
-        if (!CACHE.containsKey(packedConnections)) {
-            CACHE.put(packedConnections, computeQuadsForPipe(packedConnections));
-        }
-        return CACHE.get(packedConnections);
+        return MODEL_BY_CONNECTIONS.get(packedConnections);
     }
 
     private static EnumMap<EnumFacing, PipeQuad> computeQuadsForPipe(byte packedConnections) {
@@ -204,9 +210,14 @@ public final class PipeModelManager {
         return quads;
     }
 
+    public static String getTextureLoc(TileEntityPipe pipe) {
+        Block block = pipe.getWorld().getBlockState(pipe.getPos()).getBlock();
+        if (!(block instanceof BlockPipe)) throw new RuntimeException("TileEntityPipe is not BlockPipe, WTF");
+        return ((BlockPipe) block).getTexture().toString();
+    }
+
     // These are not technically correct UV coords, some are flipped
-    private static void texture(EnumMap<EnumFacing, PipeQuad> model, String texLoc) {
-        TextureAtlasSprite tex = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(texLoc);
+    private static void texture(EnumMap<EnumFacing, PipeQuad> model, TextureAtlasSprite tex) {
         float umin;
         float umax;
         float vmin;

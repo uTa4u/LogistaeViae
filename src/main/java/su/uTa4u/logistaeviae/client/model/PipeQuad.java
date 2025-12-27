@@ -43,4 +43,13 @@ public final class PipeQuad {
         this.vs[2] = v2;
         this.vs[3] = v3;
     }
+
+    public static PipeQuad withSamePos(PipeQuad quad) {
+        return new PipeQuad(
+                quad.xs[0], quad.ys[0], quad.zs[0],
+                quad.xs[1], quad.ys[1], quad.zs[1],
+                quad.xs[2], quad.ys[2], quad.zs[2],
+                quad.xs[3], quad.ys[3], quad.zs[3]
+        );
+    }
 }
