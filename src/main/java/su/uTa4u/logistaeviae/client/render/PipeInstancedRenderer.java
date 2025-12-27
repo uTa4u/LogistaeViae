@@ -5,13 +5,15 @@ import it.unimi.dsi.fastutil.bytes.Byte2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ByteArrayMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.client.renderer.culling.ICamera;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.entity.Entity;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3i;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -22,6 +24,7 @@ import su.uTa4u.logistaeviae.block.ModBlocks;
 import su.uTa4u.logistaeviae.client.model.PipeModelManager;
 import su.uTa4u.logistaeviae.client.model.PipeQuad;
 import su.uTa4u.logistaeviae.mixin.ActiveRenderInfoAccessor;
+import su.uTa4u.logistaeviae.mixin.ContainerLocalRenderInformationAccessor;
 import su.uTa4u.logistaeviae.mixin.RenderGlobalAccessor;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
@@ -32,7 +35,6 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -49,8 +51,6 @@ public final class PipeInstancedRenderer {
 
     private final OpenGLSaver glsaver;
 
-    private final Byte2ObjectMap<List<TileEntityPipe>> pipeByType;
-    private final Map<Vec3i, List<TileEntityPipe>> pipesInChunk;
     private final ByteBuffer vertexBuffer;
     private final FloatBuffer textureBuffer;
     private final Object2ByteArrayMap<TextureAtlasSprite> textureIDs;
@@ -79,20 +79,17 @@ public final class PipeInstancedRenderer {
 
         RenderGlobalAccessor renderGlobalAccessor = ((RenderGlobalAccessor) event.getContext());
 
-        long startTime = System.nanoTime();
-        for (Map.Entry<Vec3i, List<TileEntityPipe>> entry : this.pipesInChunk.entrySet()) {
-            Vec3i cpos = entry.getKey();
-            int cx = cpos.getX() * 16;
-            int cy = cpos.getY() * 16;
-            int cz = cpos.getZ() * 16;
-            if (camera.isBoxInFrustum(cx, cy, cz, cx + 16, cy + 16, cz + 16)) {
-                for (TileEntityPipe pipe : entry.getValue()) {
-                    this.pipeByType.get(pipe.packConnections()).add(pipe);
+        // Try to optimize this somehow
+        Byte2ObjectMap<List<TileEntityPipe>> pipeByType = new Byte2ObjectArrayMap<>();
+        for (RenderGlobal.ContainerLocalRenderInformation info : renderGlobalAccessor.getRenderInfos()) {
+            for (TileEntity te : ((ContainerLocalRenderInformationAccessor) info).getRenderChunk().getCompiledChunk().getTileEntities()) {
+                if (te instanceof TileEntityPipe && camera.isBoundingBoxInFrustum(te.getRenderBoundingBox())) {
+                    TileEntityPipe pipe = (TileEntityPipe) te;
+                    pipeByType.computeIfAbsent(pipe.packConnections(), k -> new ArrayList<>()).add(pipe);
                 }
             }
         }
-        long collectTime = System.nanoTime() - startTime;
-        if (this.pipeByType.isEmpty()) return;
+        if (pipeByType.isEmpty()) return;
 
         this.glsaver.storeCommonGlStates();
         this.glsaver.storeVertexObjects();
