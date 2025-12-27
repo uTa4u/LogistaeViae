@@ -26,6 +26,7 @@ import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+// TODO: can't be placed if player is in the same block despite AABB allowing it
 public class BlockPipe extends Block implements ITileEntityProvider {
     // ArrayMap implementation should be fine for only 64 entries
     private static final Byte2ObjectMap<AxisAlignedBB> AABB_BY_CONNECTION = generateAABBs();

@@ -25,11 +25,15 @@ public final class PipeModelManager {
     public static EnumMap<EnumFacing, PipeQuad> getTexturedQuadsForPipe(TileEntityPipe pipe) {
         EnumMap<EnumFacing, PipeQuad> model = getQuadsForPipe(pipe.packConnections());
 
-        Block block = pipe.getWorld().getBlockState(pipe.getPos()).getBlock();
-        if (!(block instanceof BlockPipe)) throw new RuntimeException("TileEntityPipe is not BlockPipe, WTF");
-        texture(model, ((BlockPipe) block).getTexture());
+        texture(model, getTextureLoc(pipe));
 
         return model;
+    }
+
+    public static String getTextureLoc(TileEntityPipe pipe) {
+        Block block = pipe.getWorld().getBlockState(pipe.getPos()).getBlock();
+        if (!(block instanceof BlockPipe)) throw new RuntimeException("TileEntityPipe is not BlockPipe, WTF");
+        return ((BlockPipe) block).getTexture().toString();
     }
 
     public static EnumMap<EnumFacing, PipeQuad> getQuadsForPipe(byte packedConnections) {
@@ -200,8 +204,8 @@ public final class PipeModelManager {
     }
 
     // These are not technically correct UV coords, some are flipped
-    private static void texture(EnumMap<EnumFacing, PipeQuad> model, ResourceLocation texLoc) {
-        TextureAtlasSprite tex = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(texLoc.toString());
+    private static void texture(EnumMap<EnumFacing, PipeQuad> model, String texLoc) {
+        TextureAtlasSprite tex = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(texLoc);
         float umin;
         float umax;
         float vmin;

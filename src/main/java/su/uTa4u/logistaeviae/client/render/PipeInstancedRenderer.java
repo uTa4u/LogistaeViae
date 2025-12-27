@@ -7,9 +7,11 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.culling.ICamera;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -30,7 +32,9 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL11.glGetInteger;
@@ -78,6 +82,7 @@ public final class PipeInstancedRenderer {
         Minecraft mc = Minecraft.getMinecraft();
         Entity entity = mc.getRenderViewEntity();
         if (entity == null) return;
+        TextureMap textureMap = mc.getTextureMapBlocks();
 
         double partialTicks = event.getPartialTicks();
         ICamera camera = new Frustum();
@@ -122,12 +127,15 @@ public final class PipeInstancedRenderer {
 
             this.vertexBuffer.clear();
             for (TileEntityPipe pipe : pipes) {
+                TextureAtlasSprite tex = textureMap.getAtlasSprite(PipeModelManager.getTextureLoc(pipe));
                 BlockPos pos = pipe.getPos();
                 this.vertexBuffer.put((float) (pos.getX() - cameraX));
                 this.vertexBuffer.put((float) (pos.getY() - cameraY));
                 this.vertexBuffer.put((float) (pos.getZ() - cameraZ));
-                this.vertexBuffer.put(0.0f);
-                this.vertexBuffer.put(0.0f);
+                this.vertexBuffer.put(tex.getMinU());
+                this.vertexBuffer.put(tex.getMinV());
+                this.vertexBuffer.put(tex.getMaxU());
+                this.vertexBuffer.put(tex.getMaxV());
             }
             this.vertexBuffer.flip();
             glBindBuffer(GL_ARRAY_BUFFER, this.instvbo);
@@ -224,7 +232,7 @@ public final class PipeInstancedRenderer {
 
     private PipeInstancedRenderer() {
         this.floatBuffer = BufferUtils.createFloatBuffer(16);
-        this.vertexBuffer = BufferUtils.createFloatBuffer(1024 * PipeQuad.VERTEX_LENGHT);
+        this.vertexBuffer = BufferUtils.createFloatBuffer(1024 * (PipeQuad.POS_COUNT + 4)); // 4 for uv bounds
 
         this.program = glCreateProgram();
         if (this.program == 0) {
@@ -277,31 +285,36 @@ public final class PipeInstancedRenderer {
         glBindVertexArray(this.vao);
 
         int quadCount = PipeModelManager.BASE_INSTANCE_COUNT * PipeModelManager.QUAD_COUNT;
-        ByteBuffer baseInstances = BufferUtils.createByteBuffer(quadCount * PipeQuad.VERTEX_COUNT * PipeQuad.POS_COUNT * Float.BYTES);
+        ByteBuffer baseInstances = BufferUtils.createByteBuffer(quadCount * PipeQuad.VERTEX_COUNT * (1 + PipeQuad.POS_COUNT * Float.BYTES));
         for (byte i = 0; i < 64; i++) {
-            for (PipeQuad quad : PipeModelManager.getQuadsForPipe(i).values()) {
+            for (Map.Entry<EnumFacing, PipeQuad> entry : PipeModelManager.getQuadsForPipe(i).entrySet()) {
+                byte faceIndex = (byte) entry.getKey().getIndex();
+                PipeQuad quad = entry.getValue();
                 for (int j = 0; j < 4; j++) {
                     baseInstances.putFloat(quad.xs[j]);
                     baseInstances.putFloat(quad.ys[j]);
                     baseInstances.putFloat(quad.zs[j]);
+                    baseInstances.put(faceIndex);
                 }
             }
         }
         baseInstances.flip();
         this.baseInstancevbo = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, this.baseInstancevbo);
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 3 * Float.BYTES, 0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 1 + 3 * Float.BYTES, 0);
         glEnableVertexAttribArray(0);
+        glVertexAttribIPointer(1, 1, GL_BYTE, 1 + 3 * Float.BYTES, 3 * Float.BYTES);
+        glEnableVertexAttribArray(1);
         glBufferData(GL_ARRAY_BUFFER, baseInstances, GL_STATIC_DRAW);
 
         this.instvbo = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, this.instvbo);
-        glVertexAttribPointer(1, 3, GL_FLOAT, false, 5 * Float.BYTES, 0);
-        glEnableVertexAttribArray(1);
-        glVertexAttribDivisor(1, 1);
-        glVertexAttribPointer(2, 2, GL_FLOAT, false, 5 * Float.BYTES, 3 * Float.BYTES);
+        glVertexAttribPointer(2, 3, GL_FLOAT, false, 7 * Float.BYTES, 0);
         glEnableVertexAttribArray(2);
         glVertexAttribDivisor(2, 1);
+        glVertexAttribPointer(3, 4, GL_FLOAT, false, 7 * Float.BYTES, 3 * Float.BYTES);
+        glEnableVertexAttribArray(3);
+        glVertexAttribDivisor(3, 1);
 
         IntBuffer indexBuffer = BufferUtils.createIntBuffer(quadCount * PipeQuad.INDICES.length);
         for (int quadIndex = 0; quadIndex < quadCount; quadIndex++) {
