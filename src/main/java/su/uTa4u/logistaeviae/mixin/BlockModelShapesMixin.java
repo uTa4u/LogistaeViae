@@ -46,7 +46,7 @@ public abstract class BlockModelShapesMixin {
     )
     private void logistaeviae_returnParticleTex(CallbackInfoReturnable<TextureAtlasSprite> cir, @Local Block block) {
         if (block instanceof BlockPipe) {
-            cir.setReturnValue(modelManager.getTextureMap().getAtlasSprite("minecraft:blocks/glass"));
+            cir.setReturnValue(this.modelManager.getTextureMap().getAtlasSprite("minecraft:blocks/glass"));
         }
     }
 }

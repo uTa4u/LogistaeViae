@@ -69,7 +69,7 @@ public final class TileEntityPipeRenderer extends FastTESR<TileEntityPipe> {
         }
 
         for (int i = 0; i < 4; i++) {
-            buffer.pos(quad.getX(i) + wx, quad.getY(i) + wy, quad.getZ(i) + wz);
+            buffer.pos(quad.xs[i] + wx, quad.ys[i] + wy, quad.zs[i] + wz);
             buffer.color(0xFF, 0xFF, 0xFF, 0xFF);
             buffer.tex(quad.us[i], quad.vs[i]);
             buffer.lightmap(skyLight, blockLight);

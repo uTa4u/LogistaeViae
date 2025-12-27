@@ -20,7 +20,7 @@ import su.uTa4u.logistaeviae.proxy.IProxy;
 public final class LogistaeViae {
     public static final Logger LOGGER = LogManager.getLogger(Tags.MOD_NAME);
 
-    public static final boolean IS_INSTANCED_RENDERING = false;
+    public static final boolean IS_INSTANCED_RENDERING = true;
 
     @SidedProxy(clientSide = "su.uTa4u.logistaeviae.proxy.ClientProxy", serverSide = "su.uTa4u.logistaeviae.proxy.ServerProxy")
     private static IProxy proxy;
