@@ -49,8 +49,8 @@ public final class PipeInstancedRenderer {
 
     private final OpenGLSaver glsaver;
 
-    private final Byte2ObjectMap<List<TileEntityPipe>> pipeByType;
-    private final Map<Vec3i, List<TileEntityPipe>> pipesInChunk;
+    // This looks disgusting, but gives like 10 fps on my machine
+    private final Byte2ObjectMap<Map<Vec3i, List<TileEntityPipe>>> pipesInChunkByType;
     private final ByteBuffer vertexBuffer;
     private final FloatBuffer textureBuffer;
     private final Object2ByteArrayMap<TextureAtlasSprite> textureIDs;
@@ -79,21 +79,6 @@ public final class PipeInstancedRenderer {
 
         RenderGlobalAccessor renderGlobalAccessor = ((RenderGlobalAccessor) event.getContext());
 
-        long startTime = System.nanoTime();
-        for (Map.Entry<Vec3i, List<TileEntityPipe>> entry : this.pipesInChunk.entrySet()) {
-            Vec3i cpos = entry.getKey();
-            int cx = cpos.getX() * 16;
-            int cy = cpos.getY() * 16;
-            int cz = cpos.getZ() * 16;
-            if (camera.isBoxInFrustum(cx, cy, cz, cx + 16, cy + 16, cz + 16)) {
-                for (TileEntityPipe pipe : entry.getValue()) {
-                    this.pipeByType.get(pipe.packConnections()).add(pipe);
-                }
-            }
-        }
-        long collectTime = System.nanoTime() - startTime;
-        if (this.pipeByType.isEmpty()) return;
-
         this.glsaver.storeCommonGlStates();
         this.glsaver.storeVertexObjects();
         this.glsaver.storeProgram();
@@ -111,33 +96,40 @@ public final class PipeInstancedRenderer {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this.ebo);
         glBindBuffer(GL_ARRAY_BUFFER, this.instvbo);
 
-        for (Byte2ObjectMap.Entry<List<TileEntityPipe>> entry : this.pipeByType.byte2ObjectEntrySet()) {
-            List<TileEntityPipe> pipes = entry.getValue();
-            if (pipes.isEmpty()) continue;
+        for (Byte2ObjectMap.Entry<Map<Vec3i, List<TileEntityPipe>>> entry : this.pipesInChunkByType.byte2ObjectEntrySet()) {
+            int count = 0;
             byte packedConnections = entry.getByteKey();
-
             this.vertexBuffer.clear();
-            for (TileEntityPipe pipe : pipes) {
-                BlockPos pos = pipe.getPos();
-                this.vertexBuffer.putFloat((float) (pos.getX() - cameraX));
-                this.vertexBuffer.putFloat((float) (pos.getY() - cameraY));
-                this.vertexBuffer.putFloat((float) (pos.getZ() - cameraZ));
-                this.vertexBuffer.put(this.textureIDs.getByte(textureMap.getAtlasSprite(PipeModelManager.getTextureLoc(pipe))));
+            for (Map.Entry<Vec3i, List<TileEntityPipe>> pipesByChunk : entry.getValue().entrySet()) {
+                Vec3i cpos = pipesByChunk.getKey();
+                int cx = cpos.getX() * 16;
+                int cy = cpos.getY() * 16;
+                int cz = cpos.getZ() * 16;
+                if (camera.isBoxInFrustum(cx, cy, cz, cx + 16, cy + 16, cz + 16)) {
+                    List<TileEntityPipe> pipes = pipesByChunk.getValue();
+                    if (pipes.isEmpty()) continue;
+
+                    for (TileEntityPipe pipe : pipes) {
+                        BlockPos pos = pipe.getPos();
+                        this.vertexBuffer.putFloat((float) (pos.getX() - cameraX));
+                        this.vertexBuffer.putFloat((float) (pos.getY() - cameraY));
+                        this.vertexBuffer.putFloat((float) (pos.getZ() - cameraZ));
+                        this.vertexBuffer.put(this.textureIDs.getByte(textureMap.getAtlasSprite(PipeModelManager.getTextureLoc(pipe))));
+                    }
+                    count += pipes.size();
+                }
             }
             this.vertexBuffer.flip();
             glBufferData(GL_ARRAY_BUFFER, this.vertexBuffer, GL_DYNAMIC_DRAW);
-
             glDrawElementsInstancedBaseInstance(
                     GL_TRIANGLES,
                     PipeQuad.INDEX_COUNT * PipeModelManager.QUAD_COUNT,
                     GL_UNSIGNED_INT,
                     (long) packedConnections * PipeQuad.INDEX_COUNT * PipeModelManager.QUAD_COUNT * Integer.BYTES,
-                    pipes.size(),
+                    count,
                     0
             );
         }
-
-        this.pipeByType.forEach((b, list) -> list.clear());
 
         this.glsaver.restoreProgram();
         this.glsaver.restoreVertexObjects();
@@ -156,19 +148,12 @@ public final class PipeInstancedRenderer {
     private PipeInstancedRenderer() {
         this.glsaver = new OpenGLSaver();
         // TODO: batch rendering to always fit inside the buffer
-        // TODO: try indirect rendering, watch vid by that lady about it first
-        // TODO: when using indirect rendering we can pass chunk coords in SSBO and use 4 bit per coord (0-15) here
         this.vertexBuffer = BufferUtils.createByteBuffer(20480 * (PipeQuad.POS_COUNT * Float.BYTES + 1)); // + 1 byte for texture id
         // Using 1/4 of maximum uniform size here (4kB), can extend if really have to
         this.textureBuffer = BufferUtils.createFloatBuffer(ModBlocks.PIPES.size() * 4); // 4 texture uv bounds
         this.textureIDs = new Object2ByteArrayMap<>();
 
-        this.pipeByType = new Byte2ObjectArrayMap<>();
-        for (byte i = 0; i < PipeModelManager.BASE_INSTANCE_COUNT; i++) {
-            this.pipeByType.put(i, new ArrayList<>());
-        }
-
-        this.pipesInChunk = new HashMap<>();
+        this.pipesInChunkByType = new Byte2ObjectArrayMap<>();
 
         this.program = glCreateProgram();
         if (this.program == 0) {
@@ -300,11 +285,15 @@ public final class PipeInstancedRenderer {
     }
 
     public void addPipe(int x, int y, int z, TileEntityPipe te) {
-        this.pipesInChunk.computeIfAbsent(new Vec3i(x, y, z), k -> new ArrayList<>()).add(te);
+        byte packedConnections = te.packConnections();
+        this.pipesInChunkByType.computeIfAbsent(packedConnections, k -> new HashMap<>())
+                .computeIfAbsent(new Vec3i(x, y, z), k -> new ArrayList<>()).add(te);
     }
 
     public void removePipe(int x, int y, int z, TileEntityPipe te) {
-        this.pipesInChunk.computeIfAbsent(new Vec3i(x, y, z), k -> new ArrayList<>()).remove(te);
+        byte packedConnections = te.packConnections();
+        this.pipesInChunkByType.computeIfAbsent(packedConnections, k -> new HashMap<>())
+                .computeIfAbsent(new Vec3i(x, y, z), k -> new ArrayList<>()).remove(te);
     }
 
     public static void initInstance() {
