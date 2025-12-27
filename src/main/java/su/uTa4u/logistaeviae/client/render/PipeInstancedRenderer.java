@@ -71,7 +71,7 @@ public final class PipeInstancedRenderer {
         TextureMap textureMap = mc.getTextureMapBlocks();
 
         double partialTicks = event.getPartialTicks();
-        Frustum camera = new Frustum();
+        ICamera camera = new Frustum();
         double cameraX = entity.lastTickPosX + (entity.posX - entity.lastTickPosX) * partialTicks;
         double cameraY = entity.lastTickPosY + (entity.posY - entity.lastTickPosY) * partialTicks;
         double cameraZ = entity.lastTickPosZ + (entity.posZ - entity.lastTickPosZ) * partialTicks;
@@ -111,7 +111,7 @@ public final class PipeInstancedRenderer {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this.ebo);
         glBindBuffer(GL_ARRAY_BUFFER, this.instvbo);
 
-        for (Byte2ObjectMap.Entry<List<TileEntityPipe>> entry : this.pipeByType.byte2ObjectEntrySet()) {
+        for (Byte2ObjectMap.Entry<List<TileEntityPipe>> entry : pipeByType.byte2ObjectEntrySet()) {
             List<TileEntityPipe> pipes = entry.getValue();
             if (pipes.isEmpty()) continue;
             byte packedConnections = entry.getByteKey();
@@ -127,17 +127,17 @@ public final class PipeInstancedRenderer {
             this.vertexBuffer.flip();
             glBufferData(GL_ARRAY_BUFFER, this.vertexBuffer, GL_DYNAMIC_DRAW);
 
+            final int indicesPerPipe = PipeQuad.INDEX_COUNT * PipeModelManager.QUAD_COUNT;
+
             glDrawElementsInstancedBaseInstance(
                     GL_TRIANGLES,
-                    PipeQuad.INDEX_COUNT * PipeModelManager.QUAD_COUNT,
+                    indicesPerPipe,
                     GL_UNSIGNED_INT,
-                    (long) packedConnections * PipeQuad.INDEX_COUNT * PipeModelManager.QUAD_COUNT * Integer.BYTES,
+                    (long) packedConnections * indicesPerPipe * Integer.BYTES,
                     pipes.size(),
                     0
             );
         }
-
-        this.pipeByType.forEach((b, list) -> list.clear());
 
         this.glsaver.restoreProgram();
         this.glsaver.restoreVertexObjects();
@@ -162,13 +162,6 @@ public final class PipeInstancedRenderer {
         // Using 1/4 of maximum uniform size here (4kB), can extend if really have to
         this.textureBuffer = BufferUtils.createFloatBuffer(ModBlocks.PIPES.size() * 4); // 4 texture uv bounds
         this.textureIDs = new Object2ByteArrayMap<>();
-
-        this.pipeByType = new Byte2ObjectArrayMap<>();
-        for (byte i = 0; i < PipeModelManager.BASE_INSTANCE_COUNT; i++) {
-            this.pipeByType.put(i, new ArrayList<>());
-        }
-
-        this.pipesInChunk = new HashMap<>();
 
         this.program = glCreateProgram();
         if (this.program == 0) {
@@ -297,14 +290,6 @@ public final class PipeInstancedRenderer {
         glUseProgram(this.program);
         glUniform4(this.texBufferUniformLoc, this.textureBuffer);
         this.glsaver.restoreProgram();
-    }
-
-    public void addPipe(int x, int y, int z, TileEntityPipe te) {
-        this.pipesInChunk.computeIfAbsent(new Vec3i(x, y, z), k -> new ArrayList<>()).add(te);
-    }
-
-    public void removePipe(int x, int y, int z, TileEntityPipe te) {
-        this.pipesInChunk.computeIfAbsent(new Vec3i(x, y, z), k -> new ArrayList<>()).remove(te);
     }
 
     public static void initInstance() {

@@ -10,11 +10,8 @@ import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.Vec3i;
 import net.minecraftforge.common.util.Constants;
 import su.uTa4u.logistaeviae.block.BlockPipe;
-import su.uTa4u.logistaeviae.client.render.PipeInstancedRenderer;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -98,18 +95,6 @@ public class TileEntityPipe extends TileEntity {
     @Override
     public boolean hasFastRenderer() {
         return true;
-    }
-
-    @Override
-    public void onLoad() {
-        super.onLoad();
-        PipeInstancedRenderer.instance.addPipe(this.pos.getX() >> 4, this.pos.getY() >> 4, this.pos.getZ() >> 4, this);
-    }
-
-    @Override
-    public void invalidate() {
-        super.invalidate();
-        PipeInstancedRenderer.instance.removePipe(this.pos.getX() >> 4, this.pos.getY() >> 4, this.pos.getZ() >> 4, this);
     }
 
     public byte packConnections() {
