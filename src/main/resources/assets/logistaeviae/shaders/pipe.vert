@@ -5,10 +5,11 @@
 in vec3 vertexPosition;// one of: 0.0, 0.25, 0.75, 1.0
 in int vertexFace;// order is D-U-N-S-W-E
 in vec3 instancePos;
-in vec4 instanceUV;// minU, minV, maxU, maxV
+in int textureID;
 
 uniform mat4 projMatrix;
 uniform mat4 viewMatrix;
+uniform vec4 textureBuffer[256];// hardcode 256 textures, can go higher but it will require changes in java code too
 
 out vec2 frag_tex;
 
@@ -42,7 +43,8 @@ void main() {
         vCoord = vertexPosition.y;
     }
 
-    float u = mix(instanceUV.x, instanceUV.z, uCoord);
-    float v = mix(instanceUV.y, instanceUV.w, vCoord);
+    vec4 tex = textureBuffer[textureID];
+    float u = mix(tex.x, tex.z, uCoord);
+    float v = mix(tex.y, tex.w, vCoord);
     frag_tex = vec2(u, v);
 }

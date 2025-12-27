@@ -2,6 +2,7 @@ package su.uTa4u.logistaeviae.client.render;
 
 import it.unimi.dsi.fastutil.bytes.Byte2ObjectArrayMap;
 import it.unimi.dsi.fastutil.bytes.Byte2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ByteArrayMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderGlobal;
@@ -14,10 +15,12 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
+import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.apache.commons.io.IOUtils;
 import org.lwjgl.BufferUtils;
 import su.uTa4u.logistaeviae.Tags;
+import su.uTa4u.logistaeviae.block.ModBlocks;
 import su.uTa4u.logistaeviae.client.model.PipeModelManager;
 import su.uTa4u.logistaeviae.client.model.PipeQuad;
 import su.uTa4u.logistaeviae.mixin.ActiveRenderInfoAccessor;
@@ -48,7 +51,9 @@ public final class PipeInstancedRenderer {
 
     private final OpenGLSaver glsaver;
 
-    private final FloatBuffer vertexBuffer;
+    private final ByteBuffer vertexBuffer;
+    private final FloatBuffer textureBuffer;
+    private final Object2ByteArrayMap<TextureAtlasSprite> textureIDs;
     private final int program;
     private final int vao;
     private final int baseInstancevbo;
@@ -56,6 +61,7 @@ public final class PipeInstancedRenderer {
     private final int ebo;
     private final int projMatrixUniformLoc;
     private final int viewMatrixUniformLoc;
+    private final int texBufferUniformLoc;
 
     @SubscribeEvent
     public void onRenderWorldLast(RenderWorldLastEvent event) {
@@ -107,21 +113,17 @@ public final class PipeInstancedRenderer {
 
             this.vertexBuffer.clear();
             for (TileEntityPipe pipe : pipes) {
-                TextureAtlasSprite tex = textureMap.getAtlasSprite(PipeModelManager.getTextureLoc(pipe));
                 BlockPos pos = pipe.getPos();
-                this.vertexBuffer.put((float) (pos.getX() - cameraX));
-                this.vertexBuffer.put((float) (pos.getY() - cameraY));
-                this.vertexBuffer.put((float) (pos.getZ() - cameraZ));
-                this.vertexBuffer.put(tex.getMinU());
-                this.vertexBuffer.put(tex.getMinV());
-                this.vertexBuffer.put(tex.getMaxU());
-                this.vertexBuffer.put(tex.getMaxV());
+                this.vertexBuffer.putFloat((float) (pos.getX() - cameraX));
+                this.vertexBuffer.putFloat((float) (pos.getY() - cameraY));
+                this.vertexBuffer.putFloat((float) (pos.getZ() - cameraZ));
+                this.vertexBuffer.put(this.textureIDs.getByte(textureMap.getAtlasSprite(PipeModelManager.getTextureLoc(pipe))));
             }
             this.vertexBuffer.flip();
             glBindBuffer(GL_ARRAY_BUFFER, this.instvbo);
             glBufferData(GL_ARRAY_BUFFER, this.vertexBuffer, GL_DYNAMIC_DRAW);
 
-            final int indicesPerPipe = PipeQuad.INDICES.length * PipeModelManager.QUAD_COUNT;
+            final int indicesPerPipe = PipeQuad.INDEX_COUNT * PipeModelManager.QUAD_COUNT;
 
             glDrawElementsInstancedBaseInstance(
                     GL_TRIANGLES,
@@ -151,7 +153,11 @@ public final class PipeInstancedRenderer {
         this.glsaver = new OpenGLSaver();
         // FIXME: batch rendering to always fit inside the buffer
         // TODO: try indirect rendering, watch vid by that lady about it first
-        this.vertexBuffer = BufferUtils.createFloatBuffer(20480 * (PipeQuad.POS_COUNT + 4)); // 4 for uv bounds
+        //       when using indirect rendering we can pass chunk coords in SSBO and use 4 bit per coord (0-15) here
+        this.vertexBuffer = BufferUtils.createByteBuffer(20480 * (PipeQuad.POS_COUNT * Float.BYTES + 1)); // + 1 byte for texture id
+        // Using 1/4 of maximum uniform size here (4kB), can extend if really have to
+        this.textureBuffer = BufferUtils.createFloatBuffer(ModBlocks.PIPES.size() * 4); // 4 texture uv bounds
+        this.textureIDs = new Object2ByteArrayMap<>();
 
         this.program = glCreateProgram();
         if (this.program == 0) {
@@ -198,6 +204,12 @@ public final class PipeInstancedRenderer {
             throw new RuntimeException("Could not create uniform: " + viewMatrixUniformName + " in shader program " + this.program);
         }
 
+        final String texBufferUniformName = "textureBuffer";
+        this.texBufferUniformLoc = glGetUniformLocation(this.program, texBufferUniformName);
+        if (this.texBufferUniformLoc < 0) {
+            throw new RuntimeException("Could not create uniform: " + texBufferUniformName + " in shader program " + this.program);
+        }
+
         this.glsaver.storeVertexObjects();
 
         this.vao = glGenVertexArrays();
@@ -228,14 +240,14 @@ public final class PipeInstancedRenderer {
 
         this.instvbo = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, this.instvbo);
-        glVertexAttribPointer(2, 3, GL_FLOAT, false, 7 * Float.BYTES, 0);
+        glVertexAttribPointer(2, 3, GL_FLOAT, false, 1 + 3 * Float.BYTES, 0);
         glEnableVertexAttribArray(2);
         glVertexAttribDivisor(2, 1);
-        glVertexAttribPointer(3, 4, GL_FLOAT, false, 7 * Float.BYTES, 3 * Float.BYTES);
+        glVertexAttribIPointer(3, 1, GL_BYTE, 1 + 3 * Float.BYTES, 3 * Float.BYTES);
         glEnableVertexAttribArray(3);
         glVertexAttribDivisor(3, 1);
 
-        IntBuffer indexBuffer = BufferUtils.createIntBuffer(quadCount * PipeQuad.INDICES.length);
+        IntBuffer indexBuffer = BufferUtils.createIntBuffer(quadCount * PipeQuad.INDEX_COUNT);
         for (int quadIndex = 0; quadIndex < quadCount; quadIndex++) {
             int baseVertex = quadIndex * PipeQuad.VERTEX_COUNT;
             indexBuffer.put(baseVertex);
@@ -251,6 +263,29 @@ public final class PipeInstancedRenderer {
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer, GL_STATIC_DRAW);
 
         this.glsaver.restoreVertexObjects();
+    }
+
+    @SubscribeEvent
+    public void onTextureStitchPost(TextureStitchEvent.Post event) {
+        this.reloadTextureBuffer(event.getMap());
+    }
+
+    public void reloadTextureBuffer(TextureMap textureMap) {
+        this.textureBuffer.clear();
+        for (byte i = 0; i < ModBlocks.PIPES.size(); i++) {
+            TextureAtlasSprite tex = textureMap.getAtlasSprite(ModBlocks.PIPES.get(i).getTexture().toString());
+            this.textureBuffer.put(tex.getMinU());
+            this.textureBuffer.put(tex.getMinV());
+            this.textureBuffer.put(tex.getMaxU());
+            this.textureBuffer.put(tex.getMaxV());
+            this.textureIDs.put(tex, i);
+        }
+        this.textureBuffer.flip();
+
+        this.glsaver.storeProgram();
+        glUseProgram(this.program);
+        glUniform4(this.texBufferUniformLoc, this.textureBuffer);
+        this.glsaver.restoreProgram();
     }
 
     public static void initInstance() {

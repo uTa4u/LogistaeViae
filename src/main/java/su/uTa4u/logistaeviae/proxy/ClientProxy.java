@@ -1,5 +1,6 @@
 package su.uTa4u.logistaeviae.proxy;
 
+import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -21,6 +22,7 @@ public class ClientProxy implements IProxy {
         ModBlocks.registerRender();
         if (LogistaeViae.IS_INSTANCED_RENDERING) {
             MinecraftForge.EVENT_BUS.register(PipeInstancedRenderer.instance);
+            PipeInstancedRenderer.instance.reloadTextureBuffer(Minecraft.getMinecraft().getTextureMapBlocks());
         } else {
             ClientRegistry.bindTileEntitySpecialRenderer(TileEntityPipe.class, new TileEntityPipeRenderer());
         }

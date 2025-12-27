@@ -7,7 +7,7 @@ public final class PipeQuad {
     public static final int VERTEX_COUNT = 4;
     public static final int POS_COUNT = 3;
     public static final int VERTEX_LENGHT = 5; // x, y, z, u, v
-    public static final int[] INDICES = new int[]{0, 1, 3, 3, 1, 2};
+    public static final int INDEX_COUNT = 6;
 
     public final float[] xs;
     public final float[] ys;
