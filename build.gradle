@@ -144,6 +144,9 @@ dependencies {
         testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     }
+
+    runtimeOnly rfg.deobf('com.cleanroommc:configanytime:3.0')
+    runtimeOnly rfg.deobf('curse.maven:flare-692142:6598523')
 }
 
 apply from: 'gradle/scripts/dependencies.gradle'

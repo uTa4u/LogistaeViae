@@ -4,15 +4,19 @@ import net.minecraft.client.renderer.culling.ClippingHelperImpl;
 import net.minecraft.util.math.Vec3i;
 
 // a failed experiment
+// FIXME: try fixing this, it's the most expensive part of rendering outside of opengl calls, also try profiling rendering with System.nanotime
 public final class FastFrustum {
     private final ClippingHelperImpl clippingHelper;
-    private final double x;
-    private final double y;
-    private final double z;
+    private double x;
+    private double y;
+    private double z;
 
-    public FastFrustum(double x, double y, double z) {
+    public FastFrustum() {
         this.clippingHelper = new ClippingHelperImpl();
         this.clippingHelper.init();
+    }
+
+    public void setPosition(double x, double y, double z) {
         this.x = x;
         this.y = y;
         this.z = z;

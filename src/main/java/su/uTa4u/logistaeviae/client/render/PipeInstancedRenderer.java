@@ -1,19 +1,18 @@
 package su.uTa4u.logistaeviae.client.render;
 
-import it.unimi.dsi.fastutil.bytes.Byte2ObjectArrayMap;
-import it.unimi.dsi.fastutil.bytes.Byte2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ByteArrayMap;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.Object2ByteMap;
+import it.unimi.dsi.fastutil.objects.Object2ByteOpenCustomHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ByteOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
-import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3i;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -37,11 +36,9 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL15.*;
@@ -51,6 +48,7 @@ import static org.lwjgl.opengl.GL33.glVertexAttribDivisor;
 import static org.lwjgl.opengl.GL42.glDrawElementsInstancedBaseInstance;
 
 // Thanks tttsaurus for https://github.com/tttsaurus/Mc122RenderBook
+
 /*
     Test commands:
     /fill ~ ~ ~ ~+99 ~+2 ~+99 logistaeviae:pipe/basic
@@ -59,14 +57,17 @@ import static org.lwjgl.opengl.GL42.glDrawElementsInstancedBaseInstance;
     /fill ~ ~ ~ ~-99 ~-2 ~+99 logistaeviae:pipe/basic
     Total pipe count: 30000 + 29999 + 29601 + 29601 = 119201
  */
+
 public final class PipeInstancedRenderer {
     public static PipeInstancedRenderer instance;
 
     private final OpenGLSaver glsaver;
 
+    private final FastFrustum frustum;
+    private final List<TileEntityPipe>[] pipesByType;
     private final ByteBuffer vertexBuffer;
     private final FloatBuffer textureBuffer;
-    private final Object2ByteArrayMap<TextureAtlasSprite> textureIDs;
+    private final Object2ByteMap<TextureAtlasSprite> textureIDs;
     private final int program;
     private final int vao;
     private final int baseInstancevbo;
@@ -84,21 +85,22 @@ public final class PipeInstancedRenderer {
         TextureMap textureMap = mc.getTextureMapBlocks();
 
         double partialTicks = event.getPartialTicks();
-        Frustum camera = new Frustum();
         double cameraX = entity.lastTickPosX + (entity.posX - entity.lastTickPosX) * partialTicks;
         double cameraY = entity.lastTickPosY + (entity.posY - entity.lastTickPosY) * partialTicks;
         double cameraZ = entity.lastTickPosZ + (entity.posZ - entity.lastTickPosZ) * partialTicks;
-        camera.setPosition(cameraX, cameraY, cameraZ);
+        this.frustum.setPosition(cameraX, cameraY, cameraZ);
 
         RenderGlobalAccessor renderGlobalAccessor = ((RenderGlobalAccessor) event.getContext());
 
-        Byte2ObjectMap<Set<TileEntityPipe>> pipesByType = new Byte2ObjectArrayMap<>();
+        for (byte i = 0; i < 64; i++) {
+            this.pipesByType[i].clear();
+        }
         for (RenderGlobal.ContainerLocalRenderInformation info : renderGlobalAccessor.getRenderInfos()) {
             CompiledChunk chunk = ((ContainerLocalRenderInformationAccessor) info).getRenderChunk().getCompiledChunk();
             List<TileEntityPipe> chunkPipes = ((CompiledChunkPipeProvider) chunk).logistaeviae_getPipes();
             if (!chunkPipes.isEmpty()) {
                 for (TileEntityPipe pipe : chunkPipes) {
-                    pipesByType.computeIfAbsent(pipe.packConnections(), k -> new HashSet<>()).add(pipe);
+                    this.pipesByType[pipe.packConnections()].add(pipe);
                 }
             }
         }
@@ -115,28 +117,28 @@ public final class PipeInstancedRenderer {
         glUniformMatrix4(this.viewMatrixUniformLoc, false, ActiveRenderInfoAccessor.getViewMatrix());
 
         GlStateManager.disableCull();
+//        GlStateManager.enableCull();
 
         glBindVertexArray(this.vao);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this.ebo);
         glBindBuffer(GL_ARRAY_BUFFER, this.instvbo);
 
-        for (Byte2ObjectMap.Entry<Set<TileEntityPipe>> entry : pipesByType.byte2ObjectEntrySet()) {
-            Set<TileEntityPipe> pipes = entry.getValue();
+        for (byte packedConnections = 0; packedConnections < 64; packedConnections++) {
+            List<TileEntityPipe> pipes = this.pipesByType[packedConnections];
             if (pipes.isEmpty()) continue;
-            byte packedConnections = entry.getByteKey();
             int count = 0;
             this.vertexBuffer.clear();
             try {
                 for (TileEntityPipe pipe : pipes) {
                     BlockPos pos = pipe.getPos();
-                    double x = pos.getX();
-                    double y = pos.getY();
-                    double z = pos.getZ();
-                    if (!camera.isBoxInFrustum(x, y, z, x + 1, y + 1, z + 1)) continue;
-                    this.vertexBuffer.putFloat((float) (x - cameraX));
-                    this.vertexBuffer.putFloat((float) (y - cameraY));
-                    this.vertexBuffer.putFloat((float) (z - cameraZ));
-                    this.vertexBuffer.put(this.textureIDs.getByte(textureMap.getAtlasSprite(PipeModelManager.getTextureLoc(pipe))));
+                    // FIXME: a little buggy but much faster lol
+                    if (!this.frustum.isBlockVisible(pos)) continue;
+                    // Try implementing backface culling
+                    // Also try better frustum culling
+                    this.vertexBuffer.putFloat((float) (pos.getX() - cameraX));
+                    this.vertexBuffer.putFloat((float) (pos.getY() - cameraY));
+                    this.vertexBuffer.putFloat((float) (pos.getZ() - cameraZ));
+                    this.vertexBuffer.putFloat(pipe.getCachedTextureID());
                     count++;
                 }
             } catch (BufferOverflowException e) {
@@ -147,13 +149,11 @@ public final class PipeInstancedRenderer {
             this.vertexBuffer.flip();
             glBufferData(GL_ARRAY_BUFFER, this.vertexBuffer, GL_DYNAMIC_DRAW);
 
-            final int indicesPerPipe = PipeQuad.INDEX_COUNT * PipeModelManager.QUAD_COUNT;
-
             glDrawElementsInstancedBaseInstance(
                     GL_TRIANGLES,
-                    indicesPerPipe,
+                    PipeModelManager.INDICES_COUNT,
                     GL_UNSIGNED_INT,
-                    (long) packedConnections * indicesPerPipe * Integer.BYTES,
+                    (long) packedConnections * PipeModelManager.INDICES_COUNT * Integer.BYTES,
                     count,
                     0
             );
@@ -178,10 +178,17 @@ public final class PipeInstancedRenderer {
         // This buffer is enough to fill 64 chunks completely with pipes.
         // If this overflows, then you have bigger problems to worry about.
         // 16 * 16 * 256 * 64
-        this.vertexBuffer = BufferUtils.createByteBuffer(16 * 16 * 256 * 64 * (PipeQuad.POS_COUNT * Float.BYTES + 1)); // + 1 byte for texture id
+        this.vertexBuffer = BufferUtils.createByteBuffer(16 * 16 * 256 * 64 * (PipeQuad.POS_COUNT * Float.BYTES + Float.BYTES)); // textureID is packed with position to allign into 4 bytes better
         // Using 1/4 of maximum uniform size here (4kB), can extend if really have to
         this.textureBuffer = BufferUtils.createFloatBuffer(ModBlocks.PIPES.size() * 4); // 4 texture uv bounds
-        this.textureIDs = new Object2ByteArrayMap<>();
+        this.textureIDs = new Object2ByteOpenHashMap<>();
+
+        this.frustum = new FastFrustum();
+
+        this.pipesByType = new ArrayList[64];
+        for (byte i = 0; i < 64; i++) {
+            this.pipesByType[i] = new ArrayList<>();
+        }
 
         this.program = glCreateProgram();
         if (this.program == 0) {
@@ -264,12 +271,9 @@ public final class PipeInstancedRenderer {
 
         this.instvbo = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, this.instvbo);
-        glVertexAttribPointer(2, 3, GL_FLOAT, false, 1 + 3 * Float.BYTES, 0);
+        glVertexAttribPointer(2, 4, GL_FLOAT, false, 4 * Float.BYTES, 0);
         glEnableVertexAttribArray(2);
         glVertexAttribDivisor(2, 1);
-        glVertexAttribIPointer(3, 1, GL_BYTE, 1 + 3 * Float.BYTES, 3 * Float.BYTES);
-        glEnableVertexAttribArray(3);
-        glVertexAttribDivisor(3, 1);
 
         IntBuffer indexBuffer = BufferUtils.createIntBuffer(quadCount * PipeQuad.INDEX_COUNT);
         for (int quadIndex = 0; quadIndex < quadCount; quadIndex++) {
@@ -310,6 +314,10 @@ public final class PipeInstancedRenderer {
         glUseProgram(this.program);
         glUniform4(this.texBufferUniformLoc, this.textureBuffer);
         this.glsaver.restoreProgram();
+    }
+
+    public byte getTextureID(TextureAtlasSprite tex) {
+        return this.textureIDs.get(tex);
     }
 
     public static void initInstance() {

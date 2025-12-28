@@ -4,8 +4,8 @@
 
 in vec3 vertexPosition;// one of: 0.0, 0.25, 0.75, 1.0
 in int vertexFace;// order is D-U-N-S-W-E
-in vec3 instancePos;
-in int textureID;
+in vec4 instancePosAndTex; // vec3 pos + int textureID
+//in int textureID;
 
 uniform mat4 projMatrix;
 uniform mat4 viewMatrix;
@@ -14,7 +14,7 @@ uniform vec4 textureBuffer[256];// hardcode 256 textures, can go higher but it w
 out vec2 frag_tex;
 
 void main() {
-    gl_Position = projMatrix * viewMatrix * vec4(vertexPosition + instancePos, 1.0);
+    gl_Position = projMatrix * viewMatrix * vec4(vertexPosition + instancePosAndTex.xyz, 1.0);
 
     float uCoord, vCoord;
     if (vertexFace == 0) {
@@ -43,7 +43,7 @@ void main() {
         vCoord = vertexPosition.y;
     }
 
-    vec4 tex = textureBuffer[textureID];
+    vec4 tex = textureBuffer[int(instancePosAndTex.w)];
     float u = mix(tex.x, tex.z, uCoord);
     float v = mix(tex.y, tex.w, vCoord);
     frag_tex = vec2(u, v);

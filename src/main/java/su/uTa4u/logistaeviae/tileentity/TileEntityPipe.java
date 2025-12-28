@@ -2,6 +2,8 @@ package su.uTa4u.logistaeviae.tileentity;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
@@ -12,14 +14,14 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.util.Constants;
 import su.uTa4u.logistaeviae.block.BlockPipe;
+import su.uTa4u.logistaeviae.client.model.PipeModelManager;
+import su.uTa4u.logistaeviae.client.render.PipeInstancedRenderer;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
-import java.util.function.Consumer;
 
 public class TileEntityPipe extends TileEntity {
     public static final String TAG_CONNECTIONS = "Connections";
@@ -30,9 +32,26 @@ public class TileEntityPipe extends TileEntity {
     private static final Item[] TEST_ITEMS = new Item[]{Items.APPLE, Items.BREAD, Item.getItemFromBlock(Blocks.SAND), Item.getItemFromBlock(Blocks.STONE)};
     public final Item item;
 
+    private byte cachedTextureID;
+
     public TileEntityPipe() {
         super();
+        this.cachedTextureID = -1;
         this.item = TEST_ITEMS[RNG.nextInt(TEST_ITEMS.length)];
+    }
+
+    public byte getCachedTextureID() {
+        if (this.cachedTextureID == -1) {
+            TextureAtlasSprite tex = Minecraft.getMinecraft()
+                    .getTextureMapBlocks()
+                    .getAtlasSprite(PipeModelManager.getTextureLoc(this));
+            this.cachedTextureID = PipeInstancedRenderer.instance.getTextureID(tex);
+        }
+        return this.cachedTextureID;
+    }
+
+    public void invalidateCachedTextureID() {
+        this.cachedTextureID = -1;
     }
 
     public void tryConnect(@Nonnull EnumFacing facing) {
