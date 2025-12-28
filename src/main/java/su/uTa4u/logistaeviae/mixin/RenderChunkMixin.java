@@ -5,15 +5,34 @@ import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.math.BlockPos;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import su.uTa4u.logistaeviae.LogistaeViae;
+import su.uTa4u.logistaeviae.client.render.PipeInstancedRenderer;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 @Mixin(RenderChunk.class)
 public abstract class RenderChunkMixin {
+
+    @Shadow
+    private @Final BlockPos.MutableBlockPos position;
+
+    @Inject(
+            method = "rebuildChunk",
+            at = @At(
+                    value = "TAIL"
+            )
+    )
+    private void logistaeviae_setChuckRebuilt(float x, float y, float z, ChunkCompileTaskGenerator generator, CallbackInfo ci) {
+        if (LogistaeViae.IS_INSTANCED_RENDERING) {
+            PipeInstancedRenderer.instance.setChuckRebuilt(this.position);
+        }
+    }
 
     @Inject(
             method = "rebuildChunk",
@@ -22,9 +41,9 @@ public abstract class RenderChunkMixin {
                     target = "Lnet/minecraft/client/renderer/tileentity/TileEntityRendererDispatcher;getRenderer(Lnet/minecraft/tileentity/TileEntity;)Lnet/minecraft/client/renderer/tileentity/TileEntitySpecialRenderer;"
             )
     )
-    private void logistaeviea_rebuildChunk(float x, float y, float z, ChunkCompileTaskGenerator generator, CallbackInfo ci, @Local CompiledChunk compiledchunk, @Local TileEntity tileentity) {
+    private void logistaeviae_addPipe(float x, float y, float z, ChunkCompileTaskGenerator generator, CallbackInfo ci, @Local TileEntity tileentity) {
         if (LogistaeViae.IS_INSTANCED_RENDERING && tileentity instanceof TileEntityPipe) {
-            compiledchunk.addTileEntity(tileentity);
+            PipeInstancedRenderer.instance.addPipe(this.position, (TileEntityPipe) tileentity);
         }
     }
 }
