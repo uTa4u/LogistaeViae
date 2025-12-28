@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.bytes.Byte2ObjectMap;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import su.uTa4u.logistaeviae.block.BlockPipe;
@@ -211,8 +212,8 @@ public final class PipeModelManager {
     }
 
     public static String getTextureLoc(TileEntityPipe pipe) {
-        Block block = pipe.getWorld().getBlockState(pipe.getPos()).getBlock();
-        if (!(block instanceof BlockPipe)) throw new RuntimeException("TileEntityPipe is not BlockPipe, WTF");
+        Block block = pipe.getBlockType();
+        if (!(block instanceof BlockPipe)) return TextureMap.LOCATION_MISSING_TEXTURE.toString();
         return ((BlockPipe) block).getTexture().toString();
     }
 
