@@ -12,6 +12,8 @@ import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
 import su.uTa4u.logistaeviae.block.BlockPipe;
 import su.uTa4u.logistaeviae.client.model.PipeModelManager;
@@ -48,10 +50,6 @@ public class TileEntityPipe extends TileEntity {
             this.cachedTextureID = PipeInstancedRenderer.instance.getTextureID(tex);
         }
         return this.cachedTextureID;
-    }
-
-    public boolean isConnected(@Nonnull EnumFacing facing) {
-        return this.connections.contains(facing);
     }
 
     public void tryConnect(@Nonnull EnumFacing facing) {
@@ -109,6 +107,7 @@ public class TileEntityPipe extends TileEntity {
     @Override
     public void onDataPacket(@Nonnull NetworkManager net, @Nonnull SPacketUpdateTileEntity pkt) {
         this.readFromNBT(pkt.getNbtCompound());
+        this.world.markBlockRangeForRenderUpdate(this.pos, this.pos);
     }
 
     @Override

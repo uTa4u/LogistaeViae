@@ -27,10 +27,10 @@ public final class PipeModelManager {
     private static final float TOOO = 0.75f;
 
     private static final Byte2ObjectMap<EnumMap<EnumFacing, PipeQuad>> MODEL_BY_CONNECTIONS = new Byte2ObjectArrayMap<>();
-    private static final Map<TextureAtlasSprite, EnumMap<EnumFacing, PipeQuad>> TEXTURED_MODEL_CACHE = new HashMap<>();
+    private static final Map<TextureAtlasSprite, Byte2ObjectMap<EnumMap<EnumFacing, PipeQuad>>> TEXTURED_MODEL_CACHE = new HashMap<>();
 
     private static final Byte2ObjectMap<List<BakedQuad>> BAKEDMODEL_BY_CONNECTIONS = new Byte2ObjectArrayMap<>();
-    private static final Map<TextureAtlasSprite, List<BakedQuad>> TEXTURED_BAKEDMODEL_CACHE = new HashMap<>();
+    private static final Map<TextureAtlasSprite, Byte2ObjectMap<List<BakedQuad>>> TEXTURED_BAKEDMODEL_CACHE = new HashMap<>();
 
     static {
         for (byte i = 0; i < BASE_INSTANCE_COUNT; i++) {
@@ -57,9 +57,10 @@ public final class PipeModelManager {
                 modelCopy.put(entry.getKey(), PipeQuad.withSamePos(entry.getValue()));
             }
             texture(modelCopy, tex);
-            TEXTURED_MODEL_CACHE.put(tex, modelCopy);
+            TEXTURED_MODEL_CACHE.getOrDefault(tex, new Byte2ObjectArrayMap<>()).put(packedConnections, modelCopy);
+            return modelCopy;
         }
-        return TEXTURED_MODEL_CACHE.get(tex);
+        return TEXTURED_MODEL_CACHE.get(tex).get(packedConnections);
     }
 
     public static EnumMap<EnumFacing, PipeQuad> getQuadsForPipe(byte packedConnections) {
@@ -74,9 +75,11 @@ public final class PipeModelManager {
             for (Map.Entry<EnumFacing, PipeQuad> entry : model.entrySet()) {
                 builder.add(entry.getValue().bake(entry.getKey()));
             }
-            TEXTURED_BAKEDMODEL_CACHE.put(tex, builder.build());
+            ImmutableList<BakedQuad> bakedQuads = builder.build();
+            TEXTURED_BAKEDMODEL_CACHE.getOrDefault(tex, new Byte2ObjectArrayMap<>()).put(packedConnections, bakedQuads);
+            return bakedQuads;
         }
-        return TEXTURED_BAKEDMODEL_CACHE.get(tex);
+        return TEXTURED_BAKEDMODEL_CACHE.get(tex).get(packedConnections);
     }
 
     public static List<BakedQuad> getBakedModelForPipe(byte packedConnections) {

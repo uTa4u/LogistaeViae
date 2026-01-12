@@ -1,5 +1,6 @@
 package su.uTa4u.logistaeviae.client.model;
 
+import com.google.common.collect.ImmutableList;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -15,16 +16,18 @@ import su.uTa4u.logistaeviae.block.BlockPipe;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.List;
 
 public class PipeBakedModel implements IBakedModel {
-    private final TextureAtlasSprite particle = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/glass");
+    private static final TextureAtlasSprite PARTICLE = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/glass");
 
     @Override
     @Nonnull
     public List<BakedQuad> getQuads(@Nullable IBlockState state, @Nullable EnumFacing side, long rand) {
+//        if (side != null) return Collections.emptyList();
         IBakedModel fallback = Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelShapes().getModelManager().getMissingModel();
-        if (state == null) return fallback.getQuads(null, side, rand);
+        if (state == null) return fallback.getQuads(null, null, rand);
         Block block = state.getBlock();
         ResourceLocation texLoc = block instanceof BlockPipe ? ((BlockPipe) block).getTexture() : TextureMap.LOCATION_MISSING_TEXTURE;
         return PipeModelManager.getTexturedBakedModelForPipe(texLoc, ((IExtendedBlockState) state).getValue(BlockPipe.CONNECTION_PROP));
@@ -48,7 +51,7 @@ public class PipeBakedModel implements IBakedModel {
     @Override
     @Nonnull
     public TextureAtlasSprite getParticleTexture() {
-        return this.particle;
+        return PARTICLE;
     }
 
     @Override

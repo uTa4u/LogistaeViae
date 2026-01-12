@@ -52,7 +52,7 @@ public final class PipeQuad {
     }
 
     public BakedQuad bake(EnumFacing dir) {
-        final VertexFormat format = DefaultVertexFormats.ITEM;
+        final VertexFormat format = DefaultVertexFormats.BLOCK;
         int size = format.getSize() / VERTEX_COUNT;
         int[] vertexData = new int[VERTEX_COUNT * size];
         for (int i = 0; i < VERTEX_COUNT; i++) {
@@ -62,14 +62,14 @@ public final class PipeQuad {
             vertexData[size * i + 3] = 0xFFFFFFFF;
             vertexData[size * i + 4] = Float.floatToRawIntBits(this.us[i]);
             vertexData[size * i + 5] = Float.floatToRawIntBits(this.vs[i]);
-//            vertexData[size * i + 6] = 0xFFFFFFFF;
-            ForgeHooksClient.fillNormal(vertexData, dir);
+            vertexData[size * i + 6] = 0xFFFFFFFF;
+//            ForgeHooksClient.fillNormal(vertexData, dir);
         }
         return new BakedQuad(
                 vertexData,
                 -1,
                 dir,
-                Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite(),
+                Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite(), // Will be retextured later
                 false,
                 format
         );

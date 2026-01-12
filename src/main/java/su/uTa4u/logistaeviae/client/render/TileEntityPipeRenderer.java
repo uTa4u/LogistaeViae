@@ -4,16 +4,22 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.block.model.SimpleBakedModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexFormat;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.client.MinecraftForgeClient;
+import net.minecraftforge.client.model.BakedItemModel;
+import net.minecraftforge.client.model.PerspectiveMapWrapper;
 import net.minecraftforge.client.model.animation.FastTESR;
-import su.uTa4u.logistaeviae.client.model.PipeModelManager;
 import su.uTa4u.logistaeviae.client.model.PipeQuad;
+import su.uTa4u.logistaeviae.mixin.PerspectiveMapWrapperAccessor;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 import javax.annotation.Nonnull;
@@ -23,26 +29,22 @@ import javax.annotation.Nonnull;
 public final class TileEntityPipeRenderer extends FastTESR<TileEntityPipe> {
     @Override
     public void renderTileEntityFast(@Nonnull TileEntityPipe pipe, double x, double y, double z, float partialTicks, int destroyStage, float partial, @Nonnull BufferBuilder buffer) {
-//        BlockPos pos = pipe.getPos();
-//        IBlockAccess world = MinecraftForgeClient.getRegionRenderCache(pipe.getWorld(), pos);
-//        IBlockState state = world.getBlockState(pos);
-//        // TODO: using same light for every face is not right, but idc rn
-//        int light = state.getPackedLightmapCoords(world, pos);
-//        int skyLight = (light >> 16) & 0xFFFF;
-//        int blockLight = light & 0xFFFF;
-//
+        BlockPos pos = pipe.getPos();
+        IBlockAccess world = MinecraftForgeClient.getRegionRenderCache(pipe.getWorld(), pos);
+        IBlockState state = world.getBlockState(pos);
+        // TODO: using same light for every face is not right, but idc rn
+        int light = state.getPackedLightmapCoords(world, pos);
+        int skyLight = (light >> 16) & 0xFFFF;
+        int blockLight = light & 0xFFFF;
+
 //        for (PipeQuad quad : PipeModelManager.getTexturedQuadsForPipe(pipe).values()) {
 //            putPipeQuad(buffer, quad, x, y, z, skyLight, blockLight);
 //        }
 
-        /*
         IBakedModel model = Minecraft.getMinecraft().getRenderItem().getItemModelMesher().getItemModel(new ItemStack(pipe.item));
 
         if (model instanceof BakedItemModel) {
-            // TODO: this loop is not needed. Instead just pass TextureAtlasSprite of this item
-            for (BakedQuad quad : model.getQuads(null, null, 0)) {
-                putItemQuad2d(buffer, quad, x, y, z, skyLight, blockLight);
-            }
+            putItemQuad2d(buffer, model.getQuads(null, null, -1).get(0), x, y, z, skyLight, blockLight);
         } else if (model instanceof PerspectiveMapWrapper) {
             IBakedModel parent = ((PerspectiveMapWrapperAccessor) model).getParent();
             if (parent instanceof SimpleBakedModel) {
@@ -58,7 +60,6 @@ public final class TileEntityPipeRenderer extends FastTESR<TileEntityPipe> {
             //       those would need to be rendered by minecraft's mechanisms,
             //       but I think rendering non isGui3d items as flat texture and blocks as a simple cube is good
         }
-         */
 
     }
 
@@ -89,7 +90,7 @@ public final class TileEntityPipeRenderer extends FastTESR<TileEntityPipe> {
         }
 
         TextureAtlasSprite tex = quad.getSprite();
-        int[] vertexData = quad.getVertexData();
+//        int[] vertexData = quad.getVertexData();
         double eyeHeight = Minecraft.getMinecraft().player.eyeHeight;
 
         double start = 0.25;
@@ -102,7 +103,8 @@ public final class TileEntityPipeRenderer extends FastTESR<TileEntityPipe> {
         float[] vs = new float[]{tex.getMaxV(), tex.getMaxV(), tex.getMinV(), tex.getMinV()};
         for (int i = 0; i < 4; i++) {
             bufferPosLookingAtCamera(buffer, wx, wy, wz, xs[i], ys[i], zStart, eyeHeight);
-            bufferColor(buffer, vertexData[3 + i * 7]);
+//            bufferColor(buffer, vertexData[3 + i * 7]);
+            bufferColor(buffer, 0xFFFFFFFF);
             buffer.tex(us[i], vs[i]);
             buffer.lightmap(skyLight, blockLight);
             buffer.endVertex();
@@ -112,7 +114,6 @@ public final class TileEntityPipeRenderer extends FastTESR<TileEntityPipe> {
 
     private static void putBlockQuad(BufferBuilder buffer, BakedQuad quad, double wx, double wy, double wz, int skyLight, int blockLight) {
         VertexFormat format = quad.getFormat();
-
         if (format != DefaultVertexFormats.ITEM) {
             throw new IllegalStateException("Expected DefaultVertexFormats.ITEM for quad, but got " + format);
         }
