@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.bytes.Byte2ObjectMap;
 import net.minecraft.block.Block;
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
+import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
@@ -18,8 +19,10 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraftforge.common.property.IExtendedBlockState;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import su.uTa4u.logistaeviae.LogistaeViae;
 import su.uTa4u.logistaeviae.Tags;
 import su.uTa4u.logistaeviae.client.model.PipeModelManager;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
@@ -32,6 +35,8 @@ public class BlockPipe extends Block implements ITileEntityProvider {
     // ArrayMap implementation should be fine for only 64 entries
     private static final Byte2ObjectMap<AxisAlignedBB> AABB_BY_CONNECTION = generateAABBs();
 
+    public static final ConnectionsProperty CONNECTION_PROP = new ConnectionsProperty("connections");
+
     private final ResourceLocation texture;
 
     public BlockPipe(String name) {
@@ -43,6 +48,23 @@ public class BlockPipe extends Block implements ITileEntityProvider {
 
     public ResourceLocation getTexture() {
         return this.texture;
+    }
+
+    @Override
+    @Nonnull
+    protected BlockStateContainer createBlockState() {
+        return new BlockStateContainer.Builder(this).add(CONNECTION_PROP).build();
+    }
+
+    @Override
+    @Nonnull
+    public IBlockState getExtendedState(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) {
+        IExtendedBlockState ext = (IExtendedBlockState) state;
+        TileEntity te = world.getTileEntity(pos);
+        if (te instanceof TileEntityPipe) {
+            ext = ext.withProperty(CONNECTION_PROP, ((TileEntityPipe) te).packConnections());
+        }
+        return ext;
     }
 
     @Override
@@ -93,7 +115,7 @@ public class BlockPipe extends Block implements ITileEntityProvider {
     @SuppressWarnings("deprecation")
     @Nonnull
     public EnumBlockRenderType getRenderType(@Nonnull IBlockState state) {
-        return EnumBlockRenderType.INVISIBLE;
+        return LogistaeViae.IS_INSTANCED_RENDERING ? EnumBlockRenderType.INVISIBLE : EnumBlockRenderType.MODEL;
     }
 
     @Override

@@ -1,5 +1,12 @@
 package su.uTa4u.logistaeviae.client.model;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.renderer.vertex.VertexFormat;
+import net.minecraft.util.EnumFacing;
+import net.minecraftforge.client.ForgeHooksClient;
+
 // four points in order
 // 3 2
 // 0 1
@@ -42,6 +49,30 @@ public final class PipeQuad {
         this.vs[1] = v1;
         this.vs[2] = v2;
         this.vs[3] = v3;
+    }
+
+    public BakedQuad bake(EnumFacing dir) {
+        final VertexFormat format = DefaultVertexFormats.ITEM;
+        int size = format.getSize() / VERTEX_COUNT;
+        int[] vertexData = new int[VERTEX_COUNT * size];
+        for (int i = 0; i < VERTEX_COUNT; i++) {
+            vertexData[size * i + 0] = Float.floatToRawIntBits(this.xs[i]);
+            vertexData[size * i + 1] = Float.floatToRawIntBits(this.ys[i]);
+            vertexData[size * i + 2] = Float.floatToRawIntBits(this.zs[i]);
+            vertexData[size * i + 3] = 0xFFFFFFFF;
+            vertexData[size * i + 4] = Float.floatToRawIntBits(this.us[i]);
+            vertexData[size * i + 5] = Float.floatToRawIntBits(this.vs[i]);
+//            vertexData[size * i + 6] = 0xFFFFFFFF;
+            ForgeHooksClient.fillNormal(vertexData, dir);
+        }
+        return new BakedQuad(
+                vertexData,
+                -1,
+                dir,
+                Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite(),
+                false,
+                format
+        );
     }
 
     public static PipeQuad withSamePos(PipeQuad quad) {

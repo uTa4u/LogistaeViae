@@ -1,9 +1,11 @@
 package su.uTa4u.logistaeviae.client.model;
 
+import com.google.common.collect.ImmutableList;
 import it.unimi.dsi.fastutil.bytes.Byte2ObjectArrayMap;
 import it.unimi.dsi.fastutil.bytes.Byte2ObjectMap;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.util.EnumFacing;
@@ -13,6 +15,7 @@ import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class PipeModelManager {
@@ -24,32 +27,60 @@ public final class PipeModelManager {
     private static final float TOOO = 0.75f;
 
     private static final Byte2ObjectMap<EnumMap<EnumFacing, PipeQuad>> MODEL_BY_CONNECTIONS = new Byte2ObjectArrayMap<>();
-    private static final Map<TextureAtlasSprite, EnumMap<EnumFacing, PipeQuad>> CACHE = new HashMap<>();
+    private static final Map<TextureAtlasSprite, EnumMap<EnumFacing, PipeQuad>> TEXTURED_MODEL_CACHE = new HashMap<>();
+
+    private static final Byte2ObjectMap<List<BakedQuad>> BAKEDMODEL_BY_CONNECTIONS = new Byte2ObjectArrayMap<>();
+    private static final Map<TextureAtlasSprite, List<BakedQuad>> TEXTURED_BAKEDMODEL_CACHE = new HashMap<>();
 
     static {
         for (byte i = 0; i < BASE_INSTANCE_COUNT; i++) {
-            MODEL_BY_CONNECTIONS.put(i, computeQuadsForPipe(i));
+            EnumMap<EnumFacing, PipeQuad> quads = computeQuadsForPipe(i);
+            MODEL_BY_CONNECTIONS.put(i, quads);
+            ImmutableList.Builder<BakedQuad> builder = new ImmutableList.Builder<>();
+            for (EnumFacing dir : EnumFacing.VALUES) {
+                builder.add(quads.get(dir).bake(dir));
+            }
+            BAKEDMODEL_BY_CONNECTIONS.put(i, builder.build());
         }
     }
 
     public static EnumMap<EnumFacing, PipeQuad> getTexturedQuadsForPipe(TileEntityPipe pipe) {
-        TextureAtlasSprite tex = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(getTextureLoc(pipe));
-        if (!CACHE.containsKey(tex)) {
-            EnumMap<EnumFacing, PipeQuad> model = getQuadsForPipe(pipe.packConnections());
+        return getTexturedQuadsForPipe(Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(getTextureLoc(pipe)), pipe.packConnections());
+    }
+
+    public static EnumMap<EnumFacing, PipeQuad> getTexturedQuadsForPipe(TextureAtlasSprite tex, byte packedConnections) {
+        if (!TEXTURED_MODEL_CACHE.containsKey(tex)) {
+            EnumMap<EnumFacing, PipeQuad> model = getQuadsForPipe(packedConnections);
             // Need deep copy
             EnumMap<EnumFacing, PipeQuad> modelCopy = new EnumMap<>(EnumFacing.class);
             for (Map.Entry<EnumFacing, PipeQuad> entry : model.entrySet()) {
                 modelCopy.put(entry.getKey(), PipeQuad.withSamePos(entry.getValue()));
             }
             texture(modelCopy, tex);
-            CACHE.put(tex, modelCopy);
+            TEXTURED_MODEL_CACHE.put(tex, modelCopy);
         }
-
-        return CACHE.get(tex);
+        return TEXTURED_MODEL_CACHE.get(tex);
     }
 
     public static EnumMap<EnumFacing, PipeQuad> getQuadsForPipe(byte packedConnections) {
         return MODEL_BY_CONNECTIONS.get(packedConnections);
+    }
+
+    public static List<BakedQuad> getTexturedBakedModelForPipe(ResourceLocation texLoc, byte packedConnections) {
+        TextureAtlasSprite tex = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(texLoc.toString());
+        if (!TEXTURED_BAKEDMODEL_CACHE.containsKey(tex)) {
+            EnumMap<EnumFacing, PipeQuad> model = getTexturedQuadsForPipe(tex, packedConnections);
+            ImmutableList.Builder<BakedQuad> builder = new ImmutableList.Builder<>();
+            for (Map.Entry<EnumFacing, PipeQuad> entry : model.entrySet()) {
+                builder.add(entry.getValue().bake(entry.getKey()));
+            }
+            TEXTURED_BAKEDMODEL_CACHE.put(tex, builder.build());
+        }
+        return TEXTURED_BAKEDMODEL_CACHE.get(tex);
+    }
+
+    public static List<BakedQuad> getBakedModelForPipe(byte packedConnections) {
+        return BAKEDMODEL_BY_CONNECTIONS.get(packedConnections);
     }
 
     private static EnumMap<EnumFacing, PipeQuad> computeQuadsForPipe(byte packedConnections) {

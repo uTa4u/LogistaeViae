@@ -50,8 +50,8 @@ public class TileEntityPipe extends TileEntity {
         return this.cachedTextureID;
     }
 
-    public void invalidateCachedTextureID() {
-        this.cachedTextureID = -1;
+    public boolean isConnected(@Nonnull EnumFacing facing) {
+        return this.connections.contains(facing);
     }
 
     public void tryConnect(@Nonnull EnumFacing facing) {

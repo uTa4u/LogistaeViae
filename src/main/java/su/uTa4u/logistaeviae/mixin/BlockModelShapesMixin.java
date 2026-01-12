@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import su.uTa4u.logistaeviae.LogistaeViae;
 import su.uTa4u.logistaeviae.block.BlockPipe;
 import su.uTa4u.logistaeviae.block.ModBlocks;
 
@@ -31,8 +32,10 @@ public abstract class BlockModelShapesMixin {
             )
     )
     private void logistaeviae_addBuiltInBlocks(CallbackInfo ci) {
-        for (Block pipe : ModBlocks.PIPES) {
-            registerBuiltInBlocks(pipe);
+        if (LogistaeViae.IS_INSTANCED_RENDERING) {
+            for (Block pipe : ModBlocks.PIPES) {
+                registerBuiltInBlocks(pipe);
+            }
         }
     }
 
@@ -45,8 +48,10 @@ public abstract class BlockModelShapesMixin {
             cancellable = true
     )
     private void logistaeviae_returnParticleTex(CallbackInfoReturnable<TextureAtlasSprite> cir, @Local Block block) {
-        if (block instanceof BlockPipe) {
-            cir.setReturnValue(this.modelManager.getTextureMap().getAtlasSprite("minecraft:blocks/glass"));
+        if (LogistaeViae.IS_INSTANCED_RENDERING) {
+            if (block instanceof BlockPipe) {
+                cir.setReturnValue(this.modelManager.getTextureMap().getAtlasSprite("minecraft:blocks/glass"));
+            }
         }
     }
 }

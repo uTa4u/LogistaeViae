@@ -23,17 +23,17 @@ import javax.annotation.Nonnull;
 public final class TileEntityPipeRenderer extends FastTESR<TileEntityPipe> {
     @Override
     public void renderTileEntityFast(@Nonnull TileEntityPipe pipe, double x, double y, double z, float partialTicks, int destroyStage, float partial, @Nonnull BufferBuilder buffer) {
-        BlockPos pos = pipe.getPos();
-        IBlockAccess world = MinecraftForgeClient.getRegionRenderCache(pipe.getWorld(), pos);
-        IBlockState state = world.getBlockState(pos);
-        // TODO: using same light for every face is not right, but idc rn
-        int light = state.getPackedLightmapCoords(world, pos);
-        int skyLight = (light >> 16) & 0xFFFF;
-        int blockLight = light & 0xFFFF;
-
-        for (PipeQuad quad : PipeModelManager.getTexturedQuadsForPipe(pipe).values()) {
-            putPipeQuad(buffer, quad, x, y, z, skyLight, blockLight);
-        }
+//        BlockPos pos = pipe.getPos();
+//        IBlockAccess world = MinecraftForgeClient.getRegionRenderCache(pipe.getWorld(), pos);
+//        IBlockState state = world.getBlockState(pos);
+//        // TODO: using same light for every face is not right, but idc rn
+//        int light = state.getPackedLightmapCoords(world, pos);
+//        int skyLight = (light >> 16) & 0xFFFF;
+//        int blockLight = light & 0xFFFF;
+//
+//        for (PipeQuad quad : PipeModelManager.getTexturedQuadsForPipe(pipe).values()) {
+//            putPipeQuad(buffer, quad, x, y, z, skyLight, blockLight);
+//        }
 
         /*
         IBakedModel model = Minecraft.getMinecraft().getRenderItem().getItemModelMesher().getItemModel(new ItemStack(pipe.item));
