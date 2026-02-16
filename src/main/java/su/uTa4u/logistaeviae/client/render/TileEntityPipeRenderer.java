@@ -41,7 +41,10 @@ public final class TileEntityPipeRenderer extends FastTESR<TileEntityPipe> {
 //            putPipeQuad(buffer, quad, x, y, z, skyLight, blockLight);
 //        }
 
-        IBakedModel model = Minecraft.getMinecraft().getRenderItem().getItemModelMesher().getItemModel(new ItemStack(pipe.item));
+        IBakedModel model = Minecraft.getMinecraft()
+                .getRenderItem()
+                .getItemModelMesher()
+                .getItemModel(new ItemStack(pipe.getCachedNetwork().item));
 
         if (model instanceof BakedItemModel) {
             putItemQuad2d(buffer, model.getQuads(null, null, -1).get(0), x, y, z, skyLight, blockLight);

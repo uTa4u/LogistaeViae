@@ -4,42 +4,34 @@ import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
 import su.uTa4u.logistaeviae.block.BlockPipe;
 import su.uTa4u.logistaeviae.client.model.PipeModelManager;
 import su.uTa4u.logistaeviae.client.render.PipeInstancedRenderer;
+import su.uTa4u.logistaeviae.logic.PipeNetwork;
+import su.uTa4u.logistaeviae.logic.PipeNetworkSavedData;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.EnumSet;
-import java.util.Random;
 import java.util.Set;
 
 public class TileEntityPipe extends TileEntity {
     public static final String TAG_CONNECTIONS = "Connections";
+    public static final String TAG_NETWORK = "Network";
 
     private final Set<EnumFacing> connections = EnumSet.noneOf(EnumFacing.class);
 
-    private static final Random RNG = new Random(1);
-    private static final Item[] TEST_ITEMS = new Item[]{Items.APPLE, Items.BREAD, Item.getItemFromBlock(Blocks.SAND), Item.getItemFromBlock(Blocks.STONE)};
-    public final Item item;
-
-    private byte cachedTextureID;
+    private byte cachedTextureID = -1;
+    private PipeNetwork cachedNetwork = null;
 
     public TileEntityPipe() {
         super();
-        this.cachedTextureID = -1;
-        this.item = TEST_ITEMS[RNG.nextInt(TEST_ITEMS.length)];
     }
 
     public byte getCachedTextureID() {
@@ -50,6 +42,10 @@ public class TileEntityPipe extends TileEntity {
             this.cachedTextureID = PipeInstancedRenderer.instance.getTextureID(tex);
         }
         return this.cachedTextureID;
+    }
+
+    public PipeNetwork getCachedNetwork() {
+        return this.cachedNetwork;
     }
 
     public void tryConnect(@Nonnull EnumFacing facing) {
