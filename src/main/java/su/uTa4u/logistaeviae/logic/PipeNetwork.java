@@ -12,7 +12,10 @@ import javax.annotation.Nonnull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PipeNetwork {
+// FIXME: implement incremental network writing/reading
+// TODO: add all missing items/blocks from LP
+// TODO: start implementing A* algorithm
+public final class PipeNetwork {
 
     // For testing purposes
     private static int networkID = 0;
@@ -22,12 +25,8 @@ public class PipeNetwork {
     private final Set<TileEntityPipe> pipes = new HashSet<>();
     private boolean isDirty = false;
 
-    public PipeNetwork(TileEntityPipe pipe) {
-        this.pipes.add(pipe);
+    PipeNetwork() {
         this.item = TEST_ITEMS[networkID++];
-
-        World world = pipe.getWorld();
-        PipeNetworkSavedData.get(world).putNetwork(world.provider.getDimension(), getChunkKey(pipe.getPos()), this);
     }
 
     public boolean isDirty() {
@@ -42,8 +41,13 @@ public class PipeNetwork {
         return null;
     }
 
+    void deserializeNBT() {
+
+    }
+
     @Nonnull
-    NBTTagCompound writeToNBT(@Nonnull NBTTagCompound nbt) {
+    NBTTagCompound serializeNBT() {
+        NBTTagCompound nbt = new NBTTagCompound();
 
         this.isDirty = false;
         return nbt;

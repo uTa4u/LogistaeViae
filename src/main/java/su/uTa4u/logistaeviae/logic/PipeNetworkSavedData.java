@@ -2,6 +2,7 @@ package su.uTa4u.logistaeviae.logic;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.nbt.NBTTagCompound;
@@ -16,27 +17,33 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-public class PipeNetworkSavedData extends WorldSavedData {
-    private static final String TAG_DIMENSION = "Dimension";
-    private static final String TAG_SAVED_DATA = "PipeNetworkSavedData";
-    private static final String NAME = Tags.MOD_ID + "_" + TAG_SAVED_DATA;
+public final class PipeNetworkSavedData extends WorldSavedData {
+    private static final String TAG_ID = "Id";
+    private static final String TAG_NETWORK = "Network";
+    private static final String TAG_NETWORK_LIST = "Networks";
+    private static final String TAG_NEXT_ID = "NextId";
+    private static final String NAME = Tags.MOD_ID + "_PipeNetworkSavedData";
 
     // TODO: maybe try using UUID as key
-    // TODO: most chunks have a 1-2 networks so using a Set is an overkill
-    // int dimension and long chunkpos keys
-    private final Int2ObjectMap<Long2ObjectMap<Set<PipeNetwork>>> networksByDimByChunkPos = new Int2ObjectArrayMap<>();
-    private final Int2ObjectMap<Set<PipeNetwork>> networksByDim = new Int2ObjectArrayMap<>();
+    private final Int2ObjectMap<PipeNetwork> networks = new Int2ObjectOpenHashMap<>();
+    private int networkID = 0;
 
     private PipeNetworkSavedData() {
         super(NAME);
     }
 
-    void putNetwork(int dimID, long chunkKey, PipeNetwork pipeNetwork) {
-        this.networksByDim.computeIfAbsent(dimID, i -> new HashSet<>()).add(pipeNetwork);
-        this.networksByDimByChunkPos
-                .computeIfAbsent(dimID, i -> new Long2ObjectOpenHashMap<>())
-                .computeIfAbsent(chunkKey, i -> new HashSet<>())
-                .add(pipeNetwork);
+    public PipeNetwork getNetwork(int id) {
+        return this.networks.get(id);
+    }
+
+    public void createNetwork() {
+        this.networks.put(this.networkID++, new PipeNetwork());
+        this.markDirty();
+    }
+
+    public void removeNetwork(int id) {
+        this.networks.remove(id);
+        this.markDirty();
     }
 
     @Override
@@ -44,20 +51,18 @@ public class PipeNetworkSavedData extends WorldSavedData {
 
     }
 
-    // FIXME: implement incremental network writing/reading
-    // TODO: add all missing items/blocks from LP
-    // TODO: start implementing A* algorithm
     @Override
     @Nonnull
     public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound nbt) {
-        NBTTagList dataTag = new NBTTagList();
-        for (Int2ObjectMap.Entry<Long2ObjectMap<Set<PipeNetwork>>> dimEntry : this.networksByDimByChunkPos.int2ObjectEntrySet()) {
-            NBTTagCompound dimTag = new NBTTagCompound();
-            dimTag.setInteger(TAG_DIMENSION, dimEntry.getIntKey());
-
-            dataTag.appendTag(dimTag);
+        NBTTagList networkList = new NBTTagList();
+        for (Int2ObjectMap.Entry<PipeNetwork> entry : this.networks.int2ObjectEntrySet()) {
+            NBTTagCompound networkData = new NBTTagCompound();
+            networkData.setInteger(TAG_ID, entry.getIntKey());
+            networkData.setTag(TAG_NETWORK, entry.getValue().serializeNBT());
+            networkList.appendTag(networkData);
         }
-        nbt.setTag(TAG_SAVED_DATA, dataTag);
+        nbt.setTag(TAG_NETWORK_LIST, networkList);
+        nbt.setInteger(TAG_NEXT_ID, this.networkID);
 
         return nbt;
     }
