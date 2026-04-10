@@ -9,6 +9,8 @@ import net.minecraft.client.renderer.block.model.SimpleBakedModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexFormat;
+import net.minecraft.init.Blocks;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -19,6 +21,8 @@ import net.minecraftforge.client.model.BakedItemModel;
 import net.minecraftforge.client.model.PerspectiveMapWrapper;
 import net.minecraftforge.client.model.animation.FastTESR;
 import su.uTa4u.logistaeviae.client.model.PipeQuad;
+import su.uTa4u.logistaeviae.logic.PipeNetwork;
+import su.uTa4u.logistaeviae.logic.PipeNetworkSavedData;
 import su.uTa4u.logistaeviae.mixin.PerspectiveMapWrapperAccessor;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
@@ -37,14 +41,11 @@ public final class TileEntityPipeRenderer extends FastTESR<TileEntityPipe> {
         int skyLight = (light >> 16) & 0xFFFF;
         int blockLight = light & 0xFFFF;
 
-//        for (PipeQuad quad : PipeModelManager.getTexturedQuadsForPipe(pipe).values()) {
-//            putPipeQuad(buffer, quad, x, y, z, skyLight, blockLight);
-//        }
-
-        IBakedModel model = Minecraft.getMinecraft()
-                .getRenderItem()
-                .getItemModelMesher()
-                .getItemModel(new ItemStack(pipe.getCachedNetwork().item));
+        IBakedModel model = null;
+//        IBakedModel model = Minecraft.getMinecraft()
+//                .getRenderItem()
+//                .getItemModelMesher()
+//                .getItemModel(new ItemStack());
 
         if (model instanceof BakedItemModel) {
             putItemQuad2d(buffer, model.getQuads(null, null, -1).get(0), x, y, z, skyLight, blockLight);

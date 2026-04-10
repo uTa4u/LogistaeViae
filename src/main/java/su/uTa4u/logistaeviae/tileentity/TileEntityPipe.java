@@ -1,6 +1,5 @@
 package su.uTa4u.logistaeviae.tileentity;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -10,11 +9,9 @@ import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.util.Constants;
-import su.uTa4u.logistaeviae.block.BlockPipe;
 import su.uTa4u.logistaeviae.client.model.PipeModelManager;
 import su.uTa4u.logistaeviae.client.render.PipeInstancedRenderer;
 import su.uTa4u.logistaeviae.logic.PipeNetwork;
-import su.uTa4u.logistaeviae.logic.PipeNetworkSavedData;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -23,12 +20,10 @@ import java.util.Set;
 
 public class TileEntityPipe extends TileEntity {
     public static final String TAG_CONNECTIONS = "Connections";
-    public static final String TAG_NETWORK = "Network";
 
     private final Set<EnumFacing> connections = EnumSet.noneOf(EnumFacing.class);
 
     private byte cachedTextureID = -1;
-    private PipeNetwork cachedNetwork = null;
 
     public TileEntityPipe() {
         super();
@@ -44,13 +39,12 @@ public class TileEntityPipe extends TileEntity {
         return this.cachedTextureID;
     }
 
-    public PipeNetwork getCachedNetwork() {
-        return this.cachedNetwork;
+    public boolean canConnect(TileEntity te) {
+        return false;
     }
 
-    public void tryConnect(@Nonnull EnumFacing facing) {
-        if (canConnectTo(facing)) {
-            this.connections.add(facing);
+    public void connect(@Nonnull EnumFacing facing) {
+        if (this.connections.add(facing)) {
             this.markDirty();
             IBlockState state = this.world.getBlockState(this.pos);
             this.world.notifyBlockUpdate(this.pos, state, state, Constants.BlockFlags.DEFAULT);
@@ -63,11 +57,6 @@ public class TileEntityPipe extends TileEntity {
             IBlockState state = this.world.getBlockState(this.pos);
             this.world.notifyBlockUpdate(this.pos, state, state, Constants.BlockFlags.DEFAULT);
         }
-    }
-
-    private boolean canConnectTo(@Nonnull EnumFacing facing) {
-        Block otherBlock = this.world.getBlockState(this.pos.offset(facing)).getBlock();
-        return otherBlock instanceof BlockPipe;
     }
 
     @Override
@@ -127,5 +116,11 @@ public class TileEntityPipe extends TileEntity {
             }
         }
         return connections;
+    }
+
+    @Nullable
+    public static TileEntityPipe getOrNull(TileEntity te) {
+        if (te instanceof TileEntityPipe) return (TileEntityPipe) te;
+        return null;
     }
 }

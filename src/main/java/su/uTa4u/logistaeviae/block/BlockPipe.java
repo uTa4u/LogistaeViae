@@ -25,6 +25,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import su.uTa4u.logistaeviae.LogistaeViae;
 import su.uTa4u.logistaeviae.Tags;
 import su.uTa4u.logistaeviae.client.model.PipeModelManager;
+import su.uTa4u.logistaeviae.logic.PipeNetwork;
+import su.uTa4u.logistaeviae.logic.PipeNetworkSavedData;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 import javax.annotation.Nonnull;
@@ -70,16 +72,31 @@ public class BlockPipe extends Block implements ITileEntityProvider {
     @Override
     public void onBlockPlacedBy(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityLivingBase placer, @Nonnull ItemStack stack) {
         if (!world.isRemote) {
-            TileEntity te = world.getTileEntity(pos);
-            if (te instanceof TileEntityPipe) {
-                for (EnumFacing facing : EnumFacing.VALUES) {
-                    ((TileEntityPipe) te).tryConnect(facing);
-                    TileEntity nbour = world.getTileEntity(pos.offset(facing));
-                    if (nbour instanceof TileEntityPipe) {
-                        // Redundant check for connectability, but whatever
-                        ((TileEntityPipe) nbour).tryConnect(facing.getOpposite());
+            TileEntityPipe pipe = TileEntityPipe.getOrNull(world.getTileEntity(pos));
+            if (pipe == null) return;
+
+            PipeNetworkSavedData savedData = PipeNetworkSavedData.get(world);
+            PipeNetwork foundNetwork = null;
+            for (EnumFacing facing : EnumFacing.VALUES) {
+                BlockPos nbourPos = pos.offset(facing);
+                TileEntity te = world.getTileEntity(nbourPos);
+                TileEntityPipe nbour = TileEntityPipe.getOrNull(te);
+                if (nbour != null) {
+                    if (foundNetwork == null) {
+                        foundNetwork = savedData.getNetwork(nbourPos);
+                        foundNetwork.add(world.provider.getDimension(), pos);
+                    } else {
+                        foundNetwork.merge(savedData.getNetwork(nbourPos));
                     }
+
+                    nbour.connect(facing.getOpposite());
+                    pipe.connect(facing);
+                } else if (pipe.canConnect(te)) {
+                    pipe.connect(facing);
                 }
+            }
+            if (foundNetwork == null) {
+                savedData.createNetwork(world.provider.getDimension(), pos);
             }
         }
     }
@@ -89,11 +106,12 @@ public class BlockPipe extends Block implements ITileEntityProvider {
         if (super.removedByPlayer(state, world, pos, player, willHarvest)) {
             if (!world.isRemote) {
                 for (EnumFacing facing : EnumFacing.VALUES) {
-                    TileEntity te = world.getTileEntity(pos.offset(facing));
-                    if (te instanceof TileEntityPipe) {
-                        ((TileEntityPipe) te).disconnect(facing.getOpposite());
+                    TileEntityPipe nbour = TileEntityPipe.getOrNull(world.getTileEntity(pos.offset(facing)));
+                    if (nbour != null) {
+                        nbour.disconnect(facing.getOpposite());
                     }
                 }
+                PipeNetworkSavedData.get(world).getNetwork(pos).remove(world.provider.getDimension(), pos);
             }
             return true;
         }

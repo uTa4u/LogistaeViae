@@ -25,9 +25,13 @@ public class PipeBakedModel implements IBakedModel {
     @Override
     @Nonnull
     public List<BakedQuad> getQuads(@Nullable IBlockState state, @Nullable EnumFacing side, long rand) {
-//        if (side != null) return Collections.emptyList();
-        IBakedModel fallback = Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelShapes().getModelManager().getMissingModel();
-        if (state == null) return fallback.getQuads(null, null, rand);
+        if (side != null) return Collections.emptyList();
+        if (state == null) return Minecraft.getMinecraft()
+                .getBlockRendererDispatcher()
+                .getBlockModelShapes()
+                .getModelManager()
+                .getMissingModel()
+                .getQuads(null, null, rand);
         Block block = state.getBlock();
         ResourceLocation texLoc = block instanceof BlockPipe ? ((BlockPipe) block).getTexture() : TextureMap.LOCATION_MISSING_TEXTURE;
         return PipeModelManager.getTexturedBakedModelForPipe(texLoc, ((IExtendedBlockState) state).getValue(BlockPipe.CONNECTION_PROP));

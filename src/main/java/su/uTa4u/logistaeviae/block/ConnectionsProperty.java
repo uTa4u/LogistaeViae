@@ -1,6 +1,7 @@
 package su.uTa4u.logistaeviae.block;
 
 import net.minecraftforge.common.property.IUnlistedProperty;
+import su.uTa4u.logistaeviae.client.model.PipeModelManager;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 public final class ConnectionsProperty implements IUnlistedProperty<Byte> {
@@ -17,7 +18,7 @@ public final class ConnectionsProperty implements IUnlistedProperty<Byte> {
 
     @Override
     public boolean isValid(Byte value) {
-        return 0 <= value && value < 64;
+        return 0 <= value && value < PipeModelManager.BASE_INSTANCE_COUNT;
     }
 
     @Override
