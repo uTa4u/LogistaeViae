@@ -19,22 +19,21 @@ import javax.annotation.Nonnull;
 import java.util.Objects;
 
 public final class PipeNetworkSavedData extends WorldSavedData {
-    private static final String TAG_ID = "Id";
+    private static final String TAG_NETWORK_ID = "Id";
     private static final String TAG_NETWORK = "Network";
     private static final String TAG_NETWORK_LIST = "Networks";
     private static final String TAG_NEXT_ID = "NextId";
     private static final String TAG_ID_BY_POS = "IdByPos";
-    private static final String TAG_POSITIONS = "Positions";
-    private static final String TAG_DIMENSION = "Dimension";
+    private static final String TAG_PIPE_LOCATIONS = "PipeLocations";
+
     private static final String NAME = Tags.MOD_ID + "_PipeNetworkSavedData";
 
-    // TODO: maybe try using UUID as key
     private final Int2ObjectMap<PipeNetwork> networks = new Int2ObjectOpenHashMap<>();
-    private final Object2IntMap<BlockPos> idByPos = new Object2IntOpenHashMap<>();
+    private final Object2IntMap<PipeLocation> idByPos = new Object2IntOpenHashMap<>();
     private int networkNextID = 1; // 0 is default return value for fastutil maps
 
     public PipeNetworkSavedData() {
-        super(NAME);
+        this(NAME);
     }
 
     public PipeNetworkSavedData(String s) {
@@ -58,16 +57,16 @@ public final class PipeNetworkSavedData extends WorldSavedData {
     }
 
     public void removeNetwork(int id) {
-        this.networks.remove(id).forEach(this.idByPos::remove);
+        this.networks.remove(id).forEachPipe(this.idByPos::remove);
         this.markDirty();
     }
 
-    void putIdByPos(BlockPos pos, int id) {
-        this.idByPos.put(pos, id);
+    void putIdByPos(PipeLocation pipeLoc, int id) {
+        this.idByPos.put(pipeLoc, id);
     }
 
-    void removeIdByPos(BlockPos pos) {
-        this.idByPos.remove(pos);
+    void removeIdByPos(PipeLocation pipeLoc) {
+        this.idByPos.remove(pipeLoc);
     }
 
     @Override
@@ -76,7 +75,7 @@ public final class PipeNetworkSavedData extends WorldSavedData {
         NBTTagList networkList = nbt.getTagList(TAG_NETWORK_LIST, Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < networkList.tagCount(); i++) {
             NBTTagCompound networkTag = networkList.getCompoundTagAt(i);
-            int id = networkTag.getInteger(TAG_ID);
+            int id = networkTag.getInteger(TAG_NETWORK_ID);
             PipeNetwork network = new PipeNetwork(id, this);
             network.readFromNBT(networkTag.getCompoundTag(TAG_NETWORK));
             this.networks.put(id, network);
@@ -86,10 +85,10 @@ public final class PipeNetworkSavedData extends WorldSavedData {
         NBTTagList idByPosList = nbt.getTagList(TAG_ID_BY_POS, Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < idByPosList.tagCount(); i++) {
             NBTTagCompound idData = idByPosList.getCompoundTagAt(i);
-            int dim = idData.getInteger(TAG_DIMENSION);
-            NBTTagList positions = idData.getTagList(TAG_POSITIONS, Constants.NBT.TAG_COMPOUND);
-            for (int j = 0; j < positions.tagCount(); j++) {
-                this.idByPos.put(NBTUtil.getPosFromTag(positions.getCompoundTagAt(j)), dim);
+            int id = idData.getInteger(TAG_NETWORK_ID);
+            NBTTagList pipeLocs = idData.getTagList(TAG_PIPE_LOCATIONS, Constants.NBT.TAG_COMPOUND);
+            for (int j = 0; j < pipeLocs.tagCount(); j++) {
+                this.idByPos.put(new PipeLocation(pipeLocs.getCompoundTagAt(j)), id);
             }
         }
 
@@ -103,7 +102,7 @@ public final class PipeNetworkSavedData extends WorldSavedData {
         NBTTagList networkList = new NBTTagList();
         for (Int2ObjectMap.Entry<PipeNetwork> entry : this.networks.int2ObjectEntrySet()) {
             NBTTagCompound networkData = new NBTTagCompound();
-            networkData.setInteger(TAG_ID, entry.getIntKey());
+            networkData.setInteger(TAG_NETWORK_ID, entry.getIntKey());
             networkData.setTag(TAG_NETWORK, entry.getValue().writeToNBT(new NBTTagCompound()));
             networkList.appendTag(networkData);
         }
@@ -111,17 +110,17 @@ public final class PipeNetworkSavedData extends WorldSavedData {
 
         NBTTagList idByPosList = new NBTTagList();
         Int2ObjectMap<NBTTagList> positionLists = new Int2ObjectArrayMap<>();
-        for (Object2IntMap.Entry<BlockPos> entry : this.idByPos.object2IntEntrySet()) {
-            int dim = entry.getIntValue();
-            if (!positionLists.containsKey(dim)) {
-                positionLists.put(dim, new NBTTagList());
+        for (Object2IntMap.Entry<PipeLocation> entry : this.idByPos.object2IntEntrySet()) {
+            int id = entry.getIntValue();
+            if (!positionLists.containsKey(id)) {
+                positionLists.put(id, new NBTTagList());
             }
-            positionLists.get(dim).appendTag(NBTUtil.createPosTag(entry.getKey()));
+            positionLists.get(id).appendTag(entry.getKey().serializeNBT());
         }
         for (Int2ObjectMap.Entry<NBTTagList> entry : positionLists.int2ObjectEntrySet()) {
             NBTTagCompound idData = new NBTTagCompound();
-            idData.setInteger(TAG_DIMENSION, entry.getIntKey());
-            idData.setTag(TAG_POSITIONS, entry.getValue());
+            idData.setInteger(TAG_NETWORK_ID, entry.getIntKey());
+            idData.setTag(TAG_PIPE_LOCATIONS, entry.getValue());
             idByPosList.appendTag(idData);
         }
         nbt.setTag(TAG_ID_BY_POS, idByPosList);
