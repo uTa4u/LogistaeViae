@@ -84,7 +84,7 @@ public class BlockPipe extends Block implements ITileEntityProvider {
                 if (nbour != null) {
                     if (foundNetwork == null) {
                         foundNetwork = savedData.getNetwork(nbourPos);
-                        foundNetwork.add(world.provider.getDimension(), pos);
+                        foundNetwork.add(world.provider.getDimension(), pos, pipe.getConnections());
                     } else {
                         foundNetwork.merge(savedData.getNetwork(nbourPos));
                     }
@@ -96,7 +96,7 @@ public class BlockPipe extends Block implements ITileEntityProvider {
                 }
             }
             if (foundNetwork == null) {
-                savedData.createNetwork(world.provider.getDimension(), pos);
+                savedData.createNetwork(world.provider.getDimension(), pos, pipe.getConnections());
             }
         }
     }

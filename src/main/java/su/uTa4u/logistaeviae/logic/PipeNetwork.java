@@ -2,15 +2,13 @@ package su.uTa4u.logistaeviae.logic;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.util.Constants;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 
 // TODO: add all missing items/blocks from LP
@@ -20,6 +18,7 @@ public final class PipeNetwork {
 
     private final Map<PipeLocation, Map<PipeLocation, PipeRoute>> routeCache = new HashMap<>();
     private final Set<PipeLocation> pipes = new HashSet<>();
+    private final Map<PipeLocation, EnumSet<EnumFacing>> pipeConnections = new HashMap<>();
     private final PipeNetworkSavedData savedData;
     public final int networkID;
 
@@ -51,9 +50,10 @@ public final class PipeNetwork {
         return nbt;
     }
 
-    public void add(int dim, BlockPos pos) {
+    public void add(int dim, BlockPos pos, EnumSet<EnumFacing> connections) {
         PipeLocation pipeLoc = new PipeLocation(dim, pos);
         this.pipes.add(pipeLoc);
+        this.pipeConnections.put(pipeLoc, connections);
         this.savedData.putIdByPos(pipeLoc, this.networkID);
         this.savedData.markDirty();
     }
@@ -61,6 +61,7 @@ public final class PipeNetwork {
     public void remove(int dim, BlockPos pos) {
         PipeLocation pipeLoc = new PipeLocation(dim, pos);
         this.pipes.remove(pipeLoc);
+        this.pipeConnections.remove(pipeLoc);
         this.savedData.removeIdByPos(pipeLoc);
         this.savedData.markDirty();
     }
@@ -76,6 +77,15 @@ public final class PipeNetwork {
         this.pipes.forEach(consumer);
     }
 
+    public Set<PipeLocation> getNeighbours(PipeLocation pipeLoc) {
+        Set<PipeLocation> connections = new HashSet<>();
+        this.pipeConnections.get(pipeLoc).forEach(dir -> {
+            PipeLocation neighbourLoc = new PipeLocation(pipeLoc.dim, pipeLoc.pos.offset(dir));
+            if (this.pipes.contains(neighbourLoc)) connections.add(neighbourLoc);
+        });
+        return connections;
+    }
+
     @Nullable
     public PipeRoute getRoute(int dim, BlockPos pos1, BlockPos pos2) {
         return this.getRoute(dim, pos1, dim, pos2);
@@ -87,24 +97,25 @@ public final class PipeNetwork {
     }
 
     @Nullable
-    public PipeRoute getRoute(PipeLocation pipeLoc1, PipeLocation pipeLoc2) {
-        if (pipeLoc1.pos == null || pipeLoc2.pos == null) return null;
+    public PipeRoute getRoute(PipeLocation from, PipeLocation to) {
+        if (from == null || to == null) return null;
+        if (from.pos == null || to.pos == null) return null;
         // TODO: Maybe routes in the same block should be allowed (Chassie Pipes from LP)
-        if (pipeLoc1.dim == pipeLoc2.dim && pipeLoc1.pos.equals(pipeLoc2.pos)) return null;
+        if (from.dim == to.dim && from.pos.equals(to.pos)) return null;
 
-        Map<PipeLocation, PipeRoute> from1Map = this.routeCache.get(pipeLoc1);
+        Map<PipeLocation, PipeRoute> from1Map = this.routeCache.get(from);
         if (from1Map != null) {
-            PipeRoute route = from1Map.get(pipeLoc2);
+            PipeRoute route = from1Map.get(to);
             if (route != null) return route;
         }
 
-        Map<PipeLocation, PipeRoute> from2Map = this.routeCache.get(pipeLoc2);
+        Map<PipeLocation, PipeRoute> from2Map = this.routeCache.get(to);
         if (from2Map != null) {
-            PipeRoute route = from2Map.get(pipeLoc1);
+            PipeRoute route = from2Map.get(from);
             if (route != null) return route;
         }
 
-        PipeRoute route = PipeRoute.compute(pipeLoc1, pipeLoc2);
+        PipeRoute route = PipeRoute.compute(this, from, to);
         if (route != null) {
 
         }

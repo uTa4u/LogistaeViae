@@ -1,5 +1,6 @@
 package su.uTa4u.logistaeviae.tileentity;
 
+import com.google.common.collect.Sets;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -15,6 +16,7 @@ import su.uTa4u.logistaeviae.logic.PipeNetwork;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -98,6 +100,10 @@ public class TileEntityPipe extends TileEntity {
     @Override
     public boolean hasFastRenderer() {
         return true;
+    }
+
+    public EnumSet<EnumFacing> getConnections() {
+        return (EnumSet<EnumFacing>) Collections.unmodifiableSet(this.connections);
     }
 
     public byte packConnections() {

@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.MapStorage;
@@ -15,6 +16,7 @@ import net.minecraftforge.common.util.Constants;
 import su.uTa4u.logistaeviae.Tags;
 
 import javax.annotation.Nonnull;
+import java.util.EnumSet;
 import java.util.Objects;
 
 public final class PipeNetworkSavedData extends WorldSavedData {
@@ -46,9 +48,9 @@ public final class PipeNetworkSavedData extends WorldSavedData {
         return this.getNetwork(this.idByPos.getInt(pos));
     }
 
-    public void createNetwork(int dim, BlockPos pos) {
+    public void createNetwork(int dim, BlockPos pos, EnumSet<EnumFacing> connections) {
         PipeNetwork network = new PipeNetwork(this.networkNextID, this);
-        network.add(dim, pos);
+        network.add(dim, pos, connections);
         this.networks.put(this.networkNextID, network);
         this.networkNextID++;
         this.markDirty();

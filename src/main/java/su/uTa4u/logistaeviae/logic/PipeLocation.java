@@ -10,8 +10,8 @@ public final class PipeLocation {
     private static final String TAG_DIMENSION = "Dimension";
     private static final String TAG_POSITION = "Position";
 
-    final int dim;
-    final BlockPos pos;
+    public final int dim;
+    public final BlockPos pos;
 
     PipeLocation(int dim, BlockPos pos) {
         this.dim = dim;
