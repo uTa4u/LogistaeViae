@@ -1,10 +1,9 @@
 package su.uTa4u.logistaeviae.logic;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTUtil;
 import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.common.util.Constants;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -22,11 +21,34 @@ public final class PipeNetwork {
     private final Map<PipeLocation, Map<PipeLocation, PipeRoute>> routeCache = new HashMap<>();
     private final Set<PipeLocation> pipes = new HashSet<>();
     private final PipeNetworkSavedData savedData;
-    private int networkID;
+    public final int networkID;
 
     PipeNetwork(int networkID, PipeNetworkSavedData savedData) {
         this.networkID = networkID;
         this.savedData = savedData;
+    }
+
+    PipeNetwork(NBTTagCompound nbt, PipeNetworkSavedData savedData) {
+        this(validateNetworkId(nbt.getInteger(TAG_ID)), savedData);
+
+        NBTTagList pipesTagList = nbt.getTagList(TAG_PIPES, Constants.NBT.TAG_COMPOUND);
+        for (int i = 0; i < pipesTagList.tagCount(); i++) {
+            this.pipes.add(new PipeLocation(pipesTagList.getCompoundTagAt(i)));
+        }
+    }
+
+    @Nonnull
+    NBTTagCompound serializeNBT() {
+        NBTTagCompound nbt = new NBTTagCompound();
+        NBTTagList pipesTagList = new NBTTagList();
+        for (PipeLocation pipeLoc : this.pipes) {
+            pipesTagList.appendTag(pipeLoc.serializeNBT());
+        }
+        nbt.setTag(TAG_PIPES, pipesTagList);
+
+        nbt.setInteger(TAG_ID, this.networkID);
+
+        return nbt;
     }
 
     public void add(int dim, BlockPos pos) {
@@ -90,27 +112,7 @@ public final class PipeNetwork {
         return null;
     }
 
-    void readFromNBT(NBTTagCompound nbt) {
-        this.pipes.clear();
-        NBTTagList pipesTagList = nbt.getTagList(TAG_PIPES, 10);
-        for (int i = 0; i < pipesTagList.tagCount(); i++) {
-            this.pipes.add(new PipeLocation(pipesTagList.getCompoundTagAt(i)));
-        }
-
-        this.networkID = nbt.getInteger(TAG_ID);
-        if (this.networkID == 0) this.networkID = 1;
-    }
-
-    @Nonnull
-    NBTTagCompound writeToNBT(NBTTagCompound nbt) {
-        NBTTagList pipesTagList = new NBTTagList();
-        for (PipeLocation pipeLoc : this.pipes) {
-            pipesTagList.appendTag(pipeLoc.serializeNBT());
-        }
-        nbt.setTag(TAG_PIPES, pipesTagList);
-
-        nbt.setInteger(TAG_ID, this.networkID);
-
-        return nbt;
+    private static int validateNetworkId(int id) {
+        return id == 0 ? 1 : id;
     }
 }

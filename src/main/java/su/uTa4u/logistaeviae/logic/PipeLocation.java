@@ -4,6 +4,8 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.util.math.BlockPos;
 
+import javax.annotation.Nonnull;
+
 public final class PipeLocation {
     private static final String TAG_DIMENSION = "Dimension";
     private static final String TAG_POSITION = "Position";
@@ -20,6 +22,7 @@ public final class PipeLocation {
         this(nbt.getInteger(TAG_DIMENSION), NBTUtil.getPosFromTag(nbt.getCompoundTag(TAG_POSITION)));
     }
 
+    @Nonnull
     NBTTagCompound serializeNBT() {
         NBTTagCompound nbt = new NBTTagCompound();
         nbt.setInteger(TAG_DIMENSION, this.dim);

@@ -7,7 +7,6 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTUtil;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.MapStorage;
@@ -20,7 +19,6 @@ import java.util.Objects;
 
 public final class PipeNetworkSavedData extends WorldSavedData {
     private static final String TAG_NETWORK_ID = "Id";
-    private static final String TAG_NETWORK = "Network";
     private static final String TAG_NETWORK_LIST = "Networks";
     private static final String TAG_NEXT_ID = "NextId";
     private static final String TAG_ID_BY_POS = "IdByPos";
@@ -74,11 +72,8 @@ public final class PipeNetworkSavedData extends WorldSavedData {
         this.networks.clear();
         NBTTagList networkList = nbt.getTagList(TAG_NETWORK_LIST, Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < networkList.tagCount(); i++) {
-            NBTTagCompound networkTag = networkList.getCompoundTagAt(i);
-            int id = networkTag.getInteger(TAG_NETWORK_ID);
-            PipeNetwork network = new PipeNetwork(id, this);
-            network.readFromNBT(networkTag.getCompoundTag(TAG_NETWORK));
-            this.networks.put(id, network);
+            PipeNetwork pipeNetwork = new PipeNetwork(networkList.getCompoundTagAt(i), this);
+            this.networks.put(pipeNetwork.networkID, pipeNetwork);
         }
 
         this.idByPos.clear();
@@ -101,10 +96,7 @@ public final class PipeNetworkSavedData extends WorldSavedData {
     public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound nbt) {
         NBTTagList networkList = new NBTTagList();
         for (Int2ObjectMap.Entry<PipeNetwork> entry : this.networks.int2ObjectEntrySet()) {
-            NBTTagCompound networkData = new NBTTagCompound();
-            networkData.setInteger(TAG_NETWORK_ID, entry.getIntKey());
-            networkData.setTag(TAG_NETWORK, entry.getValue().writeToNBT(new NBTTagCompound()));
-            networkList.appendTag(networkData);
+            networkList.appendTag(entry.getValue().serializeNBT());
         }
         nbt.setTag(TAG_NETWORK_LIST, networkList);
 
