@@ -1,6 +1,5 @@
 package su.uTa4u.logistaeviae.tileentity;
 
-import com.google.common.collect.Sets;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -12,7 +11,6 @@ import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.util.Constants;
 import su.uTa4u.logistaeviae.client.model.PipeModelManager;
 import su.uTa4u.logistaeviae.client.render.PipeInstancedRenderer;
-import su.uTa4u.logistaeviae.logic.PipeNetwork;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -23,7 +21,8 @@ import java.util.Set;
 public class TileEntityPipe extends TileEntity {
     public static final String TAG_CONNECTIONS = "Connections";
 
-    private final Set<EnumFacing> connections = EnumSet.noneOf(EnumFacing.class);
+    // TODO: maybe store in byte form
+    private final EnumSet<EnumFacing> connections = EnumSet.noneOf(EnumFacing.class);
 
     private byte cachedTextureID = -1;
 
@@ -103,7 +102,7 @@ public class TileEntityPipe extends TileEntity {
     }
 
     public EnumSet<EnumFacing> getConnections() {
-        return (EnumSet<EnumFacing>) Collections.unmodifiableSet(this.connections);
+        return this.connections;
     }
 
     public byte packConnections() {

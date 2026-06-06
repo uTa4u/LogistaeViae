@@ -55,31 +55,34 @@ public final class PipeNetwork {
         return nbt;
     }
 
-    public void add(int dim, BlockPos pos, EnumSet<EnumFacing> connections) {
-        PipeLocation pipeLoc = new PipeLocation(dim, pos);
+    public void add(PipeLocation pipeLoc, EnumSet<EnumFacing> connections) {
         this.pipes.add(pipeLoc);
         this.pipeConnections.put(pipeLoc, connections);
         this.savedData.putIdByPos(pipeLoc, this.networkID);
         this.savedData.markDirty();
     }
 
-    public void remove(int dim, BlockPos pos) {
-        PipeLocation pipeLoc = new PipeLocation(dim, pos);
+    public void remove(PipeLocation pipeLoc) {
         this.pipes.remove(pipeLoc);
         this.pipeConnections.remove(pipeLoc);
         this.savedData.removeIdByPos(pipeLoc);
         this.savedData.markDirty();
+        if (this.pipes.isEmpty()) {
+            this.savedData.removeNetwork(this.networkID);
+        }
     }
 
     public void merge(PipeNetwork that) {
+        if (that == null) return;
         if (this == that) return;
         this.pipes.addAll(that.pipes);
+        this.pipeConnections.putAll(that.pipeConnections);
+        that.pipes.forEach((pipeLoc) -> {
+            this.savedData.removeIdByPos(pipeLoc);
+            this.savedData.putIdByPos(pipeLoc, this.networkID);
+        });
         this.savedData.removeNetwork(that.networkID);
         this.savedData.markDirty();
-    }
-
-    public void forEachPipe(Consumer<PipeLocation> consumer) {
-        this.pipes.forEach(consumer);
     }
 
     public Set<PipeLocation> getNeighbours(PipeLocation pipeLoc) {

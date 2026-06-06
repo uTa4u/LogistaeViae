@@ -13,7 +13,7 @@ public final class PipeLocation {
     public final int dim;
     public final BlockPos pos;
 
-    PipeLocation(int dim, BlockPos pos) {
+    public PipeLocation(int dim, BlockPos pos) {
         this.dim = dim;
         this.pos = pos;
     }

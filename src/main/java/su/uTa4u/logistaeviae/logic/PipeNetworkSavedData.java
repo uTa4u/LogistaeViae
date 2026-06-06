@@ -16,6 +16,7 @@ import net.minecraftforge.common.util.Constants;
 import su.uTa4u.logistaeviae.Tags;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.EnumSet;
 import java.util.Objects;
 
@@ -30,6 +31,7 @@ public final class PipeNetworkSavedData extends WorldSavedData {
 
     private final Int2ObjectMap<PipeNetwork> networks = new Int2ObjectOpenHashMap<>();
     private final Object2IntMap<PipeLocation> idByPos = new Object2IntOpenHashMap<>();
+    // TODO: maybe use UUID instead?
     private int networkNextID = 1; // 0 is default return value for fastutil maps
 
     public PipeNetworkSavedData() {
@@ -40,24 +42,26 @@ public final class PipeNetworkSavedData extends WorldSavedData {
         super(s);
     }
 
-    public PipeNetwork getNetwork(int id) {
+    @Nullable
+    private PipeNetwork getNetwork(int id) {
         return this.networks.get(id);
     }
 
-    public PipeNetwork getNetwork(BlockPos pos) {
-        return this.getNetwork(this.idByPos.getInt(pos));
+    @Nullable
+    public PipeNetwork getNetwork(PipeLocation pipeLoc) {
+        return this.getNetwork(this.idByPos.getInt(pipeLoc));
     }
 
-    public void createNetwork(int dim, BlockPos pos, EnumSet<EnumFacing> connections) {
+    public void createNetwork(PipeLocation pipeLoc, EnumSet<EnumFacing> connections) {
         PipeNetwork network = new PipeNetwork(this.networkNextID, this);
-        network.add(dim, pos, connections);
+        network.add(pipeLoc, connections);
         this.networks.put(this.networkNextID, network);
         this.networkNextID++;
         this.markDirty();
     }
 
     public void removeNetwork(int id) {
-        this.networks.remove(id).forEachPipe(this.idByPos::remove);
+        this.networks.remove(id);
         this.markDirty();
     }
 
@@ -66,7 +70,7 @@ public final class PipeNetworkSavedData extends WorldSavedData {
     }
 
     void removeIdByPos(PipeLocation pipeLoc) {
-        this.idByPos.remove(pipeLoc);
+        this.idByPos.removeInt(pipeLoc);
     }
 
     @Override

@@ -25,6 +25,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import su.uTa4u.logistaeviae.LogistaeViae;
 import su.uTa4u.logistaeviae.Tags;
 import su.uTa4u.logistaeviae.client.model.PipeModelManager;
+import su.uTa4u.logistaeviae.logic.PipeLocation;
 import su.uTa4u.logistaeviae.logic.PipeNetwork;
 import su.uTa4u.logistaeviae.logic.PipeNetworkSavedData;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
@@ -75,6 +76,7 @@ public class BlockPipe extends Block implements ITileEntityProvider {
             TileEntityPipe pipe = TileEntityPipe.getOrNull(world.getTileEntity(pos));
             if (pipe == null) return;
 
+            PipeLocation pipeLoc = new PipeLocation(world.provider.getDimension(), pos);
             PipeNetworkSavedData savedData = PipeNetworkSavedData.get(world);
             PipeNetwork foundNetwork = null;
             for (EnumFacing facing : EnumFacing.VALUES) {
@@ -82,21 +84,25 @@ public class BlockPipe extends Block implements ITileEntityProvider {
                 TileEntity te = world.getTileEntity(nbourPos);
                 TileEntityPipe nbour = TileEntityPipe.getOrNull(te);
                 if (nbour != null) {
-                    if (foundNetwork == null) {
-                        foundNetwork = savedData.getNetwork(nbourPos);
-                        foundNetwork.add(world.provider.getDimension(), pos, pipe.getConnections());
-                    } else {
-                        foundNetwork.merge(savedData.getNetwork(nbourPos));
-                    }
-
                     nbour.connect(facing.getOpposite());
                     pipe.connect(facing);
+
+                    PipeLocation nbourLoc = new PipeLocation(world.provider.getDimension(), nbourPos);
+                    PipeNetwork nbourNetwork = savedData.getNetwork(nbourLoc);
+                    if (nbourNetwork != null) {
+                        if (foundNetwork == null) {
+                            foundNetwork = nbourNetwork;
+                            foundNetwork.add(pipeLoc, pipe.getConnections());
+                        } else {
+                            foundNetwork.merge(nbourNetwork);
+                        }
+                    }
                 } else if (pipe.canConnect(te)) {
                     pipe.connect(facing);
                 }
             }
             if (foundNetwork == null) {
-                savedData.createNetwork(world.provider.getDimension(), pos, pipe.getConnections());
+                savedData.createNetwork(pipeLoc, pipe.getConnections());
             }
         }
     }
@@ -111,7 +117,11 @@ public class BlockPipe extends Block implements ITileEntityProvider {
                         nbour.disconnect(facing.getOpposite());
                     }
                 }
-                PipeNetworkSavedData.get(world).getNetwork(pos).remove(world.provider.getDimension(), pos);
+                PipeLocation pipeLoc = new PipeLocation(world.provider.getDimension(), pos);
+                PipeNetwork pipeNetwork = PipeNetworkSavedData.get(world).getNetwork(pipeLoc);
+                if (pipeNetwork != null) {
+                    pipeNetwork.remove(pipeLoc);
+                }
             }
             return true;
         }
