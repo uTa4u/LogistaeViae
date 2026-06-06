@@ -22,6 +22,12 @@ public final class PipeLocation {
         this(nbt.getInteger(TAG_DIMENSION), NBTUtil.getPosFromTag(nbt.getCompoundTag(TAG_POSITION)));
     }
 
+    public int manhattanDistance(PipeLocation to) {
+        return Math.abs(this.pos.getX() - to.pos.getX()) +
+                Math.abs(this.pos.getY() - to.pos.getY()) +
+                Math.abs(this.pos.getZ() - to.pos.getZ());
+    }
+
     @Nonnull
     NBTTagCompound serializeNBT() {
         NBTTagCompound nbt = new NBTTagCompound();

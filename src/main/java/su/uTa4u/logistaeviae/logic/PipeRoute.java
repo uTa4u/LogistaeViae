@@ -1,11 +1,17 @@
 package su.uTa4u.logistaeviae.logic;
 
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
 
 public final class PipeRoute {
-    // TODO: make adjustable through config?
-    private static final double TELEPORT_COST = 100;
+    private static final int TELEPORT_COST = 100;
     private final List<PipeLocation> path;
 
     private PipeRoute(List<PipeLocation> path) {
@@ -17,7 +23,7 @@ public final class PipeRoute {
         PriorityQueue<PathNode> openSet = new PriorityQueue<>();
         Map<PipeLocation, PathNode> allNodes = new HashMap<>();
 
-        PathNode startNode = new PathNode(from, null, 0, getHeuristic(from, to));
+        PathNode startNode = new PathNode(from, null, 0, getHeuristic(pipeNetwork, from, to));
         openSet.add(startNode);
         allNodes.put(from, startNode);
 
@@ -35,11 +41,11 @@ public final class PipeRoute {
             for (PipeLocation neighbor : pipeNetwork.getNeighbours(current.location)) {
                 if (closedSet.contains(neighbor)) continue;
 
-                double tentativeG = current.g + getDistance(current.location, neighbor);
+                int tentativeG = current.g + getDistance(current.location, neighbor);
 
                 PathNode neighborNode = allNodes.get(neighbor);
                 if (neighborNode == null) {
-                    neighborNode = new PathNode(neighbor, current, tentativeG, getHeuristic(neighbor, to));
+                    neighborNode = new PathNode(neighbor, current, tentativeG, getHeuristic(pipeNetwork, neighbor, to));
                     allNodes.put(neighbor, neighborNode);
                     openSet.add(neighborNode);
                 } else if (tentativeG < neighborNode.g) {
@@ -55,41 +61,21 @@ public final class PipeRoute {
         return null;
     }
 
-    private static double getDistance(PipeLocation from, PipeLocation to) {
+    private static int getDistance(PipeLocation from, PipeLocation to) {
         return from.dim != to.dim ? TELEPORT_COST : 1;
     }
 
-    private static double getHeuristic(PipeLocation from, PipeLocation to) {
-        if (from.dim != to.dim) {
-            return getCrossDimensionHeuristic(from, to);
-        }
+    private static int getHeuristic(PipeNetwork pipeNetwork, PipeLocation from, PipeLocation to) {
+        if (from.dim == to.dim) return from.manhattanDistance(to);
 
-        return Math.abs(from.pos.getX() - to.pos.getX()) +
-                Math.abs(from.pos.getY() - to.pos.getY()) +
-                Math.abs(from.pos.getZ() - to.pos.getZ());
-    }
-
-    private static double getCrossDimensionHeuristic(PipeLocation from, PipeLocation to) {
-        PipeLocation nearestFromTeleport = findNearestTeleportPipe(from);
-        PipeLocation nearestToTeleport = findNearestTeleportPipe(to);
+        PipeLocation nearestFromTeleport = pipeNetwork.findNearestTeleportPipe(from);
+        PipeLocation nearestToTeleport = pipeNetwork.findNearestTeleportPipe(to);
 
         if (nearestFromTeleport == null || nearestToTeleport == null) {
-            return Double.MAX_VALUE;
+            return Integer.MAX_VALUE;
         }
 
-        double toTeleportCost = Math.abs(from.pos.getX() - nearestFromTeleport.pos.getX()) +
-                Math.abs(from.pos.getY() - nearestFromTeleport.pos.getY()) +
-                Math.abs(from.pos.getZ() - nearestFromTeleport.pos.getZ());
-
-        double fromTeleportCost = Math.abs(to.pos.getX() - nearestToTeleport.pos.getX()) +
-                Math.abs(to.pos.getY() - nearestToTeleport.pos.getY()) +
-                Math.abs(to.pos.getZ() - nearestToTeleport.pos.getZ());
-
-        return toTeleportCost + TELEPORT_COST + fromTeleportCost;
-    }
-
-    private static PipeLocation findNearestTeleportPipe(PipeLocation location) {
-        return null;
+        return from.manhattanDistance(nearestFromTeleport) + TELEPORT_COST + to.manhattanDistance(nearestToTeleport);
     }
 
     private static PipeRoute buildRouteFromPath(PathNode endNode) {
@@ -108,11 +94,11 @@ public final class PipeRoute {
     private static class PathNode implements Comparable<PathNode> {
         private final PipeLocation location;
         private PathNode cameFrom;
-        private double g;
-        private double h;
-        private double f;
+        private int g;
+        private final int h;
+        private int f;
 
-        PathNode(PipeLocation location, PathNode cameFrom, double g, double h) {
+        PathNode(PipeLocation location, PathNode cameFrom, int g, int h) {
             this.location = location;
             this.cameFrom = cameFrom;
             this.g = g;
@@ -122,7 +108,7 @@ public final class PipeRoute {
 
         @Override
         public int compareTo(PathNode other) {
-            return Double.compare(this.f, other.f);
+            return Integer.compare(this.f, other.f);
         }
     }
 }

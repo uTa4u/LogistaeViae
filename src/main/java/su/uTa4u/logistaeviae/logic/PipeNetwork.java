@@ -8,7 +8,11 @@ import net.minecraftforge.common.util.Constants;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 // TODO: add all missing items/blocks from LP
@@ -18,6 +22,7 @@ public final class PipeNetwork {
 
     private final Map<PipeLocation, Map<PipeLocation, PipeRoute>> routeCache = new HashMap<>();
     private final Set<PipeLocation> pipes = new HashSet<>();
+    private final Set<PipeLocation> teleportPipes = new HashSet<>();
     private final Map<PipeLocation, EnumSet<EnumFacing>> pipeConnections = new HashMap<>();
     private final PipeNetworkSavedData savedData;
     public final int networkID;
@@ -103,24 +108,31 @@ public final class PipeNetwork {
         // TODO: Maybe routes in the same block should be allowed (Chassie Pipes from LP)
         if (from.dim == to.dim && from.pos.equals(to.pos)) return null;
 
-        Map<PipeLocation, PipeRoute> from1Map = this.routeCache.get(from);
-        if (from1Map != null) {
-            PipeRoute route = from1Map.get(to);
-            if (route != null) return route;
-        }
+        Map<PipeLocation, PipeRoute> fromMap = this.routeCache.computeIfAbsent(from, i -> new HashMap<>());
+        PipeRoute route = fromMap.get(to);
+        if (route != null) return route;
 
-        Map<PipeLocation, PipeRoute> from2Map = this.routeCache.get(to);
-        if (from2Map != null) {
-            PipeRoute route = from2Map.get(from);
-            if (route != null) return route;
-        }
-
-        PipeRoute route = PipeRoute.compute(this, from, to);
+        route = PipeRoute.compute(this, from, to);
         if (route != null) {
-
+            fromMap.put(to, route);
+            return route;
         }
 
         return null;
+    }
+
+    @Nullable
+    public PipeLocation findNearestTeleportPipe(PipeLocation loc) {
+        PipeLocation ret = null;
+        int dist = Integer.MAX_VALUE;
+        for (PipeLocation tpLoc : this.teleportPipes) {
+            int d = loc.manhattanDistance(tpLoc);
+            if (ret == null || d < dist) {
+                ret = tpLoc;
+                dist = d;
+            }
+        }
+        return ret;
     }
 
     private static int validateNetworkId(int id) {
