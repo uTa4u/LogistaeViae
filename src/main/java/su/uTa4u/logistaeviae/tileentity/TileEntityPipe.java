@@ -14,7 +14,6 @@ import su.uTa4u.logistaeviae.client.render.PipeInstancedRenderer;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -94,11 +93,6 @@ public class TileEntityPipe extends TileEntity {
     public void onDataPacket(@Nonnull NetworkManager net, @Nonnull SPacketUpdateTileEntity pkt) {
         this.readFromNBT(pkt.getNbtCompound());
         this.world.markBlockRangeForRenderUpdate(this.pos, this.pos);
-    }
-
-    @Override
-    public boolean hasFastRenderer() {
-        return true;
     }
 
     public EnumSet<EnumFacing> getConnections() {
