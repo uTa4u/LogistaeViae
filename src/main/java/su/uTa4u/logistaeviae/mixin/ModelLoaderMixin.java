@@ -36,7 +36,7 @@ public abstract class ModelLoaderMixin {
     @Unique
     private static final ModelBlockAnimation DEFAULT_BLOCK_ANIMATION = new ModelBlockAnimation(ImmutableMap.of(), ImmutableMap.of());
 
-    @Shadow
+    @Shadow(remap = false)
     private @Final Map<ModelResourceLocation, IModel> stateModels;
 
     @Inject(

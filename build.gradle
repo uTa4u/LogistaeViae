@@ -129,16 +129,17 @@ dependencies {
         implementation "com.cleanroommc:assetmover:${propertyString('asset_mover_version')}"
     }
     if (propertyBool('use_mixins')) {
-        String mixin = modUtils.enableMixins("zone.rong:mixinbooter:${propertyString('mixin_booter_version')}", propertyString('mixin_refmap'))
-        api (mixin) {
+        String mixin = "zone.rong:mixinbooter:${propertyString('mixin_booter_version')}"
+        implementation (mixin) {
             transitive = false
         }
+        annotationProcessor mixin
+
         annotationProcessor 'org.ow2.asm:asm-debug-all:5.2'
         annotationProcessor 'com.google.guava:guava:32.1.2-jre'
         annotationProcessor 'com.google.code.gson:gson:2.8.9'
-        annotationProcessor (mixin) {
-            transitive = false
-        }
+
+        modUtils.enableMixins(mixin, propertyString('mixin_refmap'))
     }
     if (propertyBool('enable_junit_testing')) {
         testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
@@ -219,6 +220,9 @@ jar {
         }
         if (propertyBool('use_access_transformer')) {
             attribute_map['FMLAT'] = propertyString('access_transformer_locations')
+        }
+        if (propertyBool('use_mixins')) {
+            attribute_map['MixinConfigs'] = "mixins.${mod_id}.json"
         }
         attributes(attribute_map)
     }
