@@ -22,7 +22,10 @@ import su.uTa4u.logistaeviae.block.ModBlocks;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 @Mixin(ModelLoader.class)
 public abstract class ModelLoaderMixin {
@@ -45,6 +48,7 @@ public abstract class ModelLoaderMixin {
     private void logistaeviae_loadPipeModel(CallbackInfo ci) {
         if (VANILLA_MODEL_WRAPPER_CTOR == null) {
             try {
+                // TODO: don't use Reflection...
                 VANILLA_MODEL_WRAPPER_CTOR = Class.forName("net.minecraftforge.client.model.ModelLoader$VanillaModelWrapper").getDeclaredConstructor(ModelLoader.class, ResourceLocation.class, ModelBlock.class, boolean.class, ModelBlockAnimation.class);
             } catch (ClassNotFoundException | NoSuchMethodException e) {
                 throw new RuntimeException("Couldn't access constructor of ModelLoader$VanillaModelWrapper!", e);

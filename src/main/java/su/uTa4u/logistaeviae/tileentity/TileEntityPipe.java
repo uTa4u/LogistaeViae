@@ -10,7 +10,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.util.Constants;
 import su.uTa4u.logistaeviae.client.model.PipeModelManager;
-import su.uTa4u.logistaeviae.client.render.PipeInstancedRenderer;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -23,20 +22,8 @@ public class TileEntityPipe extends TileEntity {
     // TODO: maybe store in byte form
     private final EnumSet<EnumFacing> connections = EnumSet.noneOf(EnumFacing.class);
 
-    private byte cachedTextureID = -1;
-
     public TileEntityPipe() {
         super();
-    }
-
-    public byte getCachedTextureID() {
-        if (this.cachedTextureID == -1) {
-            TextureAtlasSprite tex = Minecraft.getMinecraft()
-                    .getTextureMapBlocks()
-                    .getAtlasSprite(PipeModelManager.getTextureLoc(this));
-            this.cachedTextureID = PipeInstancedRenderer.instance.getTextureID(tex);
-        }
-        return this.cachedTextureID;
     }
 
     public boolean canConnect(TileEntity te) {

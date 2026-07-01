@@ -29,9 +29,6 @@ import javax.annotation.Nonnull;
 public final class LogistaeViae {
     public static final Logger LOGGER = LogManager.getLogger(Tags.MOD_NAME);
 
-    // A separate rendering for a single type of blocks is kinda dumb now that I think about it...
-    public static final boolean IS_INSTANCED_RENDERING = false;
-
     @SidedProxy(clientSide = "su.uTa4u.logistaeviae.proxy.ClientProxy", serverSide = "su.uTa4u.logistaeviae.proxy.ServerProxy")
     private static IProxy proxy;
 
@@ -64,24 +61,20 @@ public final class LogistaeViae {
 
         @SubscribeEvent
         public static void onModelRegistry(ModelRegistryEvent event) {
-            if (!IS_INSTANCED_RENDERING) {
-                for (BlockPipe pipe : ModBlocks.PIPES) {
-                    ModelLoader.setCustomStateMapper(pipe, new StateMapperBase() {
-                        @Override
-                        @Nonnull
-                        protected ModelResourceLocation getModelResourceLocation(@Nonnull IBlockState state) {
-                            return new ModelResourceLocation(Tags.MOD_ID + ":pipe", "normal");
-                        }
-                    });
-                }
+            for (BlockPipe pipe : ModBlocks.PIPES) {
+                ModelLoader.setCustomStateMapper(pipe, new StateMapperBase() {
+                    @Override
+                    @Nonnull
+                    protected ModelResourceLocation getModelResourceLocation(@Nonnull IBlockState state) {
+                        return new ModelResourceLocation(Tags.MOD_ID + ":pipe", "normal");
+                    }
+                });
             }
         }
 
         @SubscribeEvent
         public static void onModelBake(ModelBakeEvent event) {
-            if (!IS_INSTANCED_RENDERING) {
-                event.getModelRegistry().putObject(new ModelResourceLocation(Tags.MOD_ID + ":pipe", "normal"), new PipeBakedModel());
-            }
+            event.getModelRegistry().putObject(new ModelResourceLocation(Tags.MOD_ID + ":pipe", "normal"), new PipeBakedModel());
         }
     }
 }

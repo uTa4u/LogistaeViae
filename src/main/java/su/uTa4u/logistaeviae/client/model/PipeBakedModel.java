@@ -1,6 +1,5 @@
 package su.uTa4u.logistaeviae.client.model;
 
-import com.google.common.collect.ImmutableList;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
