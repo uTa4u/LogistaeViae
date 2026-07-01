@@ -45,10 +45,9 @@ public abstract class ModelLoaderMixin {
                     value = "TAIL"
             )
     )
-    private void logistaeviae_loadPipeModel(CallbackInfo ci) {
+    private void logistaeviae$loadPipeModel(CallbackInfo ci) {
         if (VANILLA_MODEL_WRAPPER_CTOR == null) {
             try {
-                // TODO: don't use Reflection...
                 VANILLA_MODEL_WRAPPER_CTOR = Class.forName("net.minecraftforge.client.model.ModelLoader$VanillaModelWrapper").getDeclaredConstructor(ModelLoader.class, ResourceLocation.class, ModelBlock.class, boolean.class, ModelBlockAnimation.class);
             } catch (ClassNotFoundException | NoSuchMethodException e) {
                 throw new RuntimeException("Couldn't access constructor of ModelLoader$VanillaModelWrapper!", e);
