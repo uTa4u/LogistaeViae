@@ -18,6 +18,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.EnumSet;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public final class PipeNetworkSavedData extends WorldSavedData {
     private static final String TAG_NETWORK_ID = "Id";
@@ -62,6 +63,10 @@ public final class PipeNetworkSavedData extends WorldSavedData {
     public void removeNetwork(int id) {
         this.networks.remove(id);
         this.markDirty();
+    }
+
+    public void forEachNetwork(Consumer<PipeNetwork> consumer) {
+        this.networks.values().forEach(consumer);
     }
 
     void putIdByPos(PipeLocation pipeLoc, int id) {
@@ -127,6 +132,7 @@ public final class PipeNetworkSavedData extends WorldSavedData {
         return nbt;
     }
 
+    @Nonnull
     public static PipeNetworkSavedData get(World world) {
         MapStorage storage = Objects.requireNonNull(world.getMapStorage());
         PipeNetworkSavedData instance = (PipeNetworkSavedData) storage.getOrLoadData(PipeNetworkSavedData.class, NAME);
