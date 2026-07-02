@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 import org.spongepowered.asm.mixin.injection.Coerce;
 
-@Mixin(targets = "net.minecraftforge.client.model.ModelLoader$VanillaModelWrapper", remap = false)
+@Mixin(targets = "net.minecraftforge.client.model.ModelLoader$VanillaModelWrapper")
 public interface VanillaModelWrapperInvoker {
 
     // TODO: uncomment after fix by rong is made

@@ -36,8 +36,9 @@ public abstract class ModelLoaderMixin {
     @Unique
     private static final ModelBlockAnimation DEFAULT_BLOCK_ANIMATION = new ModelBlockAnimation(ImmutableMap.of(), ImmutableMap.of());
 
+    @Final
     @Shadow(remap = false)
-    private @Final Map<ModelResourceLocation, IModel> stateModels;
+    private Map<ModelResourceLocation, IModel> stateModels;
 
     @Inject(
             method = "loadItemModels",
@@ -48,6 +49,7 @@ public abstract class ModelLoaderMixin {
     private void logistaeviae$loadPipeModel(CallbackInfo ci) {
         if (VANILLA_MODEL_WRAPPER_CTOR == null) {
             try {
+                // TODO: use mixin instead
                 VANILLA_MODEL_WRAPPER_CTOR = Class.forName("net.minecraftforge.client.model.ModelLoader$VanillaModelWrapper").getDeclaredConstructor(ModelLoader.class, ResourceLocation.class, ModelBlock.class, boolean.class, ModelBlockAnimation.class);
             } catch (ClassNotFoundException | NoSuchMethodException e) {
                 throw new RuntimeException("Couldn't access constructor of ModelLoader$VanillaModelWrapper!", e);
