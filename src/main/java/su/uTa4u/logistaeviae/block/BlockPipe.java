@@ -13,6 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -21,8 +22,10 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.property.IExtendedBlockState;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import su.uTa4u.logistaeviae.LogistaeViae;
 import su.uTa4u.logistaeviae.Tags;
 import su.uTa4u.logistaeviae.client.model.PipeModelManager;
+import su.uTa4u.logistaeviae.gui.GuiHandler;
 import su.uTa4u.logistaeviae.logic.PipeLocation;
 import su.uTa4u.logistaeviae.logic.PipeNetwork;
 import su.uTa4u.logistaeviae.logic.PipeNetworkSavedData;
@@ -39,16 +42,30 @@ public class BlockPipe extends Block implements ITileEntityProvider {
     public static final ConnectionsProperty CONNECTION_PROP = new ConnectionsProperty("connections");
 
     private final ResourceLocation texture;
+    // TODO: not all pipes will have a gui so instead of using -1 as invalid gui we should have a subclass probably
+    private final int guiID;
 
-    public BlockPipe(String name) {
+    public BlockPipe(String name, int guiID) {
         super(Material.CIRCUITS);
         this.setRegistryName(Tags.MOD_ID, "pipe/" + name);
         this.setTranslationKey(Tags.MOD_ID + ".pipe_" + name);
         this.texture = new ResourceLocation(Tags.MOD_ID, "block/pipe/" + name);
+        this.guiID = guiID;
     }
 
     public ResourceLocation getTexture() {
         return this.texture;
+    }
+
+    @Override
+    public boolean onBlockActivated(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing facing, float hitX, float hitY, float hitZ) {
+        if (this.guiID == GuiHandler.INVALID_GUI_ID) return false;
+        if (!world.isRemote) {
+            TileEntityPipe pipe = TileEntityPipe.getOrNull(world.getTileEntity(pos));
+            if (pipe == null) return false;
+            player.openGui(LogistaeViae.instance, this.guiID, world, pos.getX(), pos.getY(), pos.getZ());
+        }
+        return true;
     }
 
     @Override

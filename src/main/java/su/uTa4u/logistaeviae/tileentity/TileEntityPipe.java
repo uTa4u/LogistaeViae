@@ -9,6 +9,7 @@ import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.util.Constants;
+import net.minecraftforge.items.ItemStackHandler;
 import su.uTa4u.logistaeviae.client.model.PipeModelManager;
 
 import javax.annotation.Nonnull;
@@ -21,6 +22,7 @@ public class TileEntityPipe extends TileEntity {
 
     // TODO: maybe store in byte form
     private final EnumSet<EnumFacing> connections = EnumSet.noneOf(EnumFacing.class);
+    private final ItemStackHandler items = new ItemStackHandler(9);
 
     public TileEntityPipe() {
         super();

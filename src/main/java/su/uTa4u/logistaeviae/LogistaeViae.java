@@ -35,6 +35,9 @@ public final class LogistaeViae {
     @SidedProxy(clientSide = "su.uTa4u.logistaeviae.proxy.ClientProxy", serverSide = "su.uTa4u.logistaeviae.proxy.ServerProxy")
     private static IProxy proxy;
 
+    @Mod.Instance
+    public static LogistaeViae instance;
+
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         proxy.preInit(event);

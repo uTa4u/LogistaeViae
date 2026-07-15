@@ -15,6 +15,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import su.uTa4u.logistaeviae.LogistaeViae;
 import su.uTa4u.logistaeviae.Tags;
+import su.uTa4u.logistaeviae.gui.GuiHandler;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 import java.util.ArrayList;
@@ -33,8 +34,8 @@ public final class ModBlocks {
 
     public static final Block PIPE_COBBLESTONE = registerPipe("cobblestone");
     public static final Block PIPE_BASIC = registerPipe("basic");
-    public static final Block PIPE_SUPPLIER = registerPipe("supplier");
-    public static final Block PIPE_PROVIDER = registerPipe("provider");
+    public static final Block PIPE_PROVIDER = registerPipeWithGui("provider", GuiHandler.PIPE_PROVIDER_ID);
+    public static final Block PIPE_SUPPLIER = registerPipeWithGui("supplier", GuiHandler.PIPE_SUPPLIER_ID);
 
     private static Block register(Supplier<Block> supplier) {
         Block block = supplier.get();
@@ -43,7 +44,11 @@ public final class ModBlocks {
     }
 
     private static Block registerPipe(String name) {
-        BlockPipe block = new BlockPipe(name);
+        return registerPipeWithGui(name, GuiHandler.INVALID_GUI_ID);
+    }
+
+    private static Block registerPipeWithGui(String name, int guiID) {
+        BlockPipe block = new BlockPipe(name, guiID);
         BLOCKS.add(block);
         PIPES.add(block);
         return block;
