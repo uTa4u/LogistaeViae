@@ -3,6 +3,7 @@ package su.uTa4u.logistaeviae;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.renderer.block.statemap.StateMapperBase;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.ModelBakeEvent;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
@@ -15,12 +16,14 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import su.uTa4u.logistaeviae.block.BlockPipe;
 import su.uTa4u.logistaeviae.block.ModBlocks;
 import su.uTa4u.logistaeviae.client.model.PipeBakedModel;
+import su.uTa4u.logistaeviae.gui.GuiHandler;
 import su.uTa4u.logistaeviae.proxy.IProxy;
 
 import javax.annotation.Nonnull;
@@ -40,6 +43,8 @@ public final class LogistaeViae {
     @EventHandler
     public void init(FMLInitializationEvent event) {
         proxy.init(event);
+
+        NetworkRegistry.INSTANCE.registerGuiHandler(this, new GuiHandler());
     }
 
     @EventHandler
@@ -76,5 +81,9 @@ public final class LogistaeViae {
         public static void onModelBake(ModelBakeEvent event) {
             event.getModelRegistry().putObject(new ModelResourceLocation(Tags.MOD_ID + ":pipe", "normal"), new PipeBakedModel());
         }
+    }
+
+    public static ResourceLocation resource(String path) {
+        return new ResourceLocation(Tags.MOD_ID, path);
     }
 }

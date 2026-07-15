@@ -58,7 +58,7 @@ public abstract class ModelLoaderMixin {
 
         IModel model;
         try {
-            model = ModelLoaderRegistry.getModel(new ResourceLocation(Tags.MOD_ID, "item/pipe"));
+            model = ModelLoaderRegistry.getModel(LogistaeViae.resource("item/pipe"));
         } catch (Exception e) {
             LogistaeViae.LOGGER.error("Could not load pipe item model!");
             return;
@@ -75,7 +75,7 @@ public abstract class ModelLoaderMixin {
 
         for (BlockPipe blockPipe : ModBlocks.PIPES) {
             ResourceLocation regName = Objects.requireNonNull(blockPipe.getRegistryName());
-            ResourceLocation modelLoc = new ResourceLocation(Tags.MOD_ID, "models/item/" + regName.getPath());
+            ResourceLocation modelLoc = LogistaeViae.resource("models/item/" + regName.getPath());
             Map<String, String> textures = new HashMap<>();
             textures.put("all", blockPipe.getTexture().toString());
             ModelBlock texturedPipeModel = new ModelBlock(

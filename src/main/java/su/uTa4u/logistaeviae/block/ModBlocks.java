@@ -13,6 +13,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import su.uTa4u.logistaeviae.LogistaeViae;
 import su.uTa4u.logistaeviae.Tags;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
@@ -50,7 +51,7 @@ public final class ModBlocks {
 
     @SubscribeEvent
     public static void onRegisterBlock(RegistryEvent.Register<Block> event) {
-        GameRegistry.registerTileEntity(TileEntityPipe.class, new ResourceLocation(Tags.MOD_ID, "tileentity_pipe"));
+        GameRegistry.registerTileEntity(TileEntityPipe.class, LogistaeViae.resource("tileentity_pipe"));
         for (Block block : BLOCKS) {
             event.getRegistry().register(block);
         }
