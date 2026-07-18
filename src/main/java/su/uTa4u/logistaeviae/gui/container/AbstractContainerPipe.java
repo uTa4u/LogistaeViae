@@ -2,6 +2,7 @@ package su.uTa4u.logistaeviae.gui.container;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
@@ -41,6 +42,7 @@ public abstract class AbstractContainerPipe extends Container {
             itemstack = itemstack1.copy();
             int size = this.pipe.getItems().getSlots();
 
+            // FIXME: fix shift click consuming item
             if (index < PLAYER_INV_SLOT_COUNT) {
                 // index is in player inventory
                 if (!this.mergeItemStack(itemstack1, PLAYER_INV_SLOT_COUNT, PLAYER_INV_SLOT_COUNT + size, false)) {
