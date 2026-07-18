@@ -2,8 +2,6 @@ package su.uTa4u.logistaeviae.tileentity;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
@@ -12,7 +10,6 @@ import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.items.ItemStackHandler;
 import su.uTa4u.logistaeviae.block.BlockPipe;
-import su.uTa4u.logistaeviae.client.model.PipeModelManager;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

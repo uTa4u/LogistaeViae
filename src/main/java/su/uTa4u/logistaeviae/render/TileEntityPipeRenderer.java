@@ -1,4 +1,4 @@
-package su.uTa4u.logistaeviae.client.render;
+package su.uTa4u.logistaeviae.render;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;

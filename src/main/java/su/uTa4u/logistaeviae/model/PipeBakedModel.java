@@ -1,4 +1,4 @@
-package su.uTa4u.logistaeviae.client.model;
+package su.uTa4u.logistaeviae.model;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;

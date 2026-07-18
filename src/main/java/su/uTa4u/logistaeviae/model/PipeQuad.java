@@ -1,4 +1,4 @@
-package su.uTa4u.logistaeviae.client.model;
+package su.uTa4u.logistaeviae.model;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BakedQuad;

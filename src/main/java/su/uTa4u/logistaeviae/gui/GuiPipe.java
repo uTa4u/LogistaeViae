@@ -1,4 +1,4 @@
-package su.uTa4u.logistaeviae.gui.gui;
+package su.uTa4u.logistaeviae.gui;
 
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;

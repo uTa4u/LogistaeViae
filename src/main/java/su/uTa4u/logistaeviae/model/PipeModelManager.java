@@ -1,4 +1,4 @@
-package su.uTa4u.logistaeviae.client.model;
+package su.uTa4u.logistaeviae.model;
 
 import com.google.common.collect.ImmutableList;
 import it.unimi.dsi.fastutil.bytes.Byte2ObjectArrayMap;

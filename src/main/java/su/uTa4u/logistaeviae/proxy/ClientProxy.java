@@ -5,7 +5,7 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import su.uTa4u.logistaeviae.block.ModBlocks;
-import su.uTa4u.logistaeviae.client.render.TileEntityPipeRenderer;
+import su.uTa4u.logistaeviae.render.TileEntityPipeRenderer;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 public class ClientProxy implements IProxy {

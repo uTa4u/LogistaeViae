@@ -22,7 +22,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import su.uTa4u.logistaeviae.block.BlockPipe;
 import su.uTa4u.logistaeviae.block.ModBlocks;
-import su.uTa4u.logistaeviae.client.model.PipeBakedModel;
+import su.uTa4u.logistaeviae.model.PipeBakedModel;
 import su.uTa4u.logistaeviae.gui.GuiHandler;
 import su.uTa4u.logistaeviae.proxy.IProxy;
 

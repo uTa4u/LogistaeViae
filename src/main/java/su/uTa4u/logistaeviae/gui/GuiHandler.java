@@ -5,7 +5,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.inventory.Container;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.network.IGuiHandler;
@@ -13,7 +12,6 @@ import su.uTa4u.logistaeviae.LogistaeViae;
 import su.uTa4u.logistaeviae.gui.container.AbstractContainerPipe;
 import su.uTa4u.logistaeviae.gui.container.ContainerProviderPipe;
 import su.uTa4u.logistaeviae.gui.container.ContainerSupplierPipe;
-import su.uTa4u.logistaeviae.gui.gui.GuiPipe;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 import javax.annotation.Nullable;
