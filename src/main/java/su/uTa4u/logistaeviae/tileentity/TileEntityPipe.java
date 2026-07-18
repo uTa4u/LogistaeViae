@@ -19,13 +19,24 @@ import java.util.Set;
 
 public class TileEntityPipe extends TileEntity {
     public static final String TAG_CONNECTIONS = "Connections";
+    public static final String TAG_ITEMS = "Items";
 
     // TODO: maybe store in byte form
     private final EnumSet<EnumFacing> connections = EnumSet.noneOf(EnumFacing.class);
-    private final ItemStackHandler items = new ItemStackHandler(9);
+    // TODO: not hardcode size ofc
+    private final ItemStackHandler items = new ItemStackHandler(9) {
+        @Override
+        protected void onContentsChanged(int slot) {
+            TileEntityPipe.this.markDirty();
+        }
+    };
 
     public TileEntityPipe() {
         super();
+    }
+
+    public ItemStackHandler getItems() {
+        return this.items;
     }
 
     public boolean canConnect(TileEntity te) {
@@ -55,6 +66,8 @@ public class TileEntityPipe extends TileEntity {
 
         nbt.setByte(TAG_CONNECTIONS, this.packConnections());
 
+        nbt.setTag(TAG_ITEMS, this.items.serializeNBT());
+
         return nbt;
     }
 
@@ -64,6 +77,10 @@ public class TileEntityPipe extends TileEntity {
 
         this.connections.clear();
         this.connections.addAll(unpackConnections(nbt.getByte(TAG_CONNECTIONS)));
+
+        if (nbt.hasKey(TAG_ITEMS)) {
+            this.items.deserializeNBT((NBTTagCompound) nbt.getTag(TAG_ITEMS));
+        }
     }
 
     @Override

@@ -50,10 +50,10 @@ public final class GuiHandler implements IGuiHandler {
     @Override
     public Object getServerGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) {
         if (ID == INVALID_GUI_ID) return null;
-        BiFunction<InventoryPlayer, TileEntityPipe, Container> func = this.serverGuiById.get(ID);
-        if (func == null) return null;
         TileEntityPipe pipe = TileEntityPipe.getOrNull(world.getTileEntity(new BlockPos(x, y, z)));
         if (pipe == null) return null;
+        BiFunction<InventoryPlayer, TileEntityPipe, Container> func = this.serverGuiById.get(ID);
+        if (func == null) return null;
         return func.apply(player.inventory, pipe);
     }
 
@@ -61,10 +61,10 @@ public final class GuiHandler implements IGuiHandler {
     @Override
     public Object getClientGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) {
         if (ID == INVALID_GUI_ID) return null;
-        BiFunction<InventoryPlayer, TileEntityPipe, GuiContainer> func = this.clientGuiById.get(ID);
-        if (func == null) return null;
         TileEntityPipe pipe = TileEntityPipe.getOrNull(world.getTileEntity(new BlockPos(x, y, z)));
         if (pipe == null) return null;
+        BiFunction<InventoryPlayer, TileEntityPipe, GuiContainer> func = this.clientGuiById.get(ID);
+        if (func == null) return null;
         return func.apply(player.inventory, pipe);
     }
 }
