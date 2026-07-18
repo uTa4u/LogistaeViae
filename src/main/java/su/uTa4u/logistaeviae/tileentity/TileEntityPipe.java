@@ -1,5 +1,6 @@
 package su.uTa4u.logistaeviae.tileentity;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -10,6 +11,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.items.ItemStackHandler;
+import su.uTa4u.logistaeviae.block.BlockPipe;
 import su.uTa4u.logistaeviae.client.model.PipeModelManager;
 
 import javax.annotation.Nonnull;
@@ -37,6 +39,14 @@ public class TileEntityPipe extends TileEntity {
 
     public ItemStackHandler getItems() {
         return this.items;
+    }
+
+    @Override
+    @Nonnull
+    public BlockPipe getBlockType() {
+        Block block = super.getBlockType();
+        if (!(block instanceof BlockPipe)) throw new RuntimeException("TileEntityPipe is not BlockPipe");
+        return (BlockPipe) block;
     }
 
     public boolean canConnect(TileEntity te) {

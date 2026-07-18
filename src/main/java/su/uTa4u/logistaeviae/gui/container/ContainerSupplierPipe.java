@@ -1,22 +1,20 @@
 package su.uTa4u.logistaeviae.gui.container;
 
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.inventory.Container;
+import net.minecraftforge.items.SlotItemHandler;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
-import javax.annotation.Nonnull;
-
-public class ContainerSupplierPipe extends Container {
-
-    private final TileEntityPipe pipe;
+public class ContainerSupplierPipe extends AbstractContainerPipe {
 
     public ContainerSupplierPipe(InventoryPlayer playerInv, TileEntityPipe pipe) {
-        this.pipe = pipe;
+        super(playerInv, pipe);
+
+        // Pipe slots
+        for (int row = 0; row < 3; ++row) {
+            for (int col = 0; col < 3; ++col) {
+                this.addSlotToContainer(new SlotItemHandler(this.pipe.getItems(), row * 3 + col, col * 18 + 62, row * 18 + 17));
+            }
+        }
     }
 
-    @Override
-    public boolean canInteractWith(@Nonnull EntityPlayer playerIn) {
-        return true;
-    }
 }

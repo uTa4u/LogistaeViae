@@ -41,16 +41,22 @@ public class BlockPipe extends Block implements ITileEntityProvider {
 
     public static final ConnectionsProperty CONNECTION_PROP = new ConnectionsProperty("connections");
 
+    private final String name;
     private final ResourceLocation texture;
     // TODO: not all pipes will have a gui so instead of using -1 as invalid gui we should have a subclass probably
     private final int guiID;
 
     public BlockPipe(String name, int guiID) {
         super(Material.CIRCUITS);
+        this.name = name;
         this.setRegistryName(Tags.MOD_ID, "pipe/" + name);
         this.setTranslationKey(Tags.MOD_ID + ".pipe_" + name);
         this.texture = LogistaeViae.resource("block/pipe/" + name);
         this.guiID = guiID;
+    }
+
+    public String getName() {
+        return this.name;
     }
 
     public ResourceLocation getTexture() {
