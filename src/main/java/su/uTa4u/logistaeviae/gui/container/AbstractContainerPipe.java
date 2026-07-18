@@ -10,22 +10,23 @@ import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 import javax.annotation.Nonnull;
 
 public abstract class AbstractContainerPipe extends Container {
+    private static final int PLAYER_INV_SLOT_COUNT = 4 * 9;
 
     protected final TileEntityPipe pipe;
 
     protected AbstractContainerPipe(InventoryPlayer playerInv, TileEntityPipe pipe) {
         this.pipe = pipe;
 
-        // Player hotbar slots
-        for (int col = 0; col < 9; ++col) {
-            this.addSlotToContainer(new Slot(playerInv, col, col * 18 + 8, 142));
-        }
-
         // Player main slots
         for (int row = 0; row < 3; ++row) {
             for (int col = 0; col < 9; ++col) {
                 this.addSlotToContainer(new Slot(playerInv, row * 9 + col + 9, col * 18 + 8, row * 18 + 84));
             }
+        }
+
+        // Player hotbar slots
+        for (int col = 0; col < 9; ++col) {
+            this.addSlotToContainer(new Slot(playerInv, col, col * 18 + 8, 142));
         }
     }
 
@@ -40,11 +41,13 @@ public abstract class AbstractContainerPipe extends Container {
             itemstack = itemstack1.copy();
             int size = this.pipe.getItems().getSlots();
 
-            if (index < size) {
-                if (!this.mergeItemStack(itemstack1, size, this.inventorySlots.size(), true)) {
+            if (index < PLAYER_INV_SLOT_COUNT) {
+                // index is in player inventory
+                if (!this.mergeItemStack(itemstack1, PLAYER_INV_SLOT_COUNT, PLAYER_INV_SLOT_COUNT + size, false)) {
                     return ItemStack.EMPTY;
                 }
-            } else if (!this.mergeItemStack(itemstack1, 0, size, false)) {
+            } else if (!this.mergeItemStack(itemstack1, 0, PLAYER_INV_SLOT_COUNT, false)) {
+                // index is in pipe inventory
                 return ItemStack.EMPTY;
             }
 
