@@ -32,6 +32,7 @@ public final class ModBlocks {
 
     public static final Block PIPE_COBBLESTONE = registerPipe("cobblestone");
     public static final Block PIPE_BASIC = registerPipe("basic");
+    // TODO: make pipe with gui a separate class
     public static final Block PIPE_PROVIDER = registerPipeWithGui("provider", GuiHandler.PIPE_PROVIDER_ID);
     public static final Block PIPE_SUPPLIER = registerPipeWithGui("supplier", GuiHandler.PIPE_SUPPLIER_ID);
 

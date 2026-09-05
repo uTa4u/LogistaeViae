@@ -53,6 +53,7 @@ public class BlockPipe extends Block implements ITileEntityProvider {
         this.setTranslationKey(Tags.MOD_ID + ".pipe_" + name);
         this.texture = LogistaeViae.resource("block/pipe/" + name);
         this.guiID = guiID;
+        this.setCreativeTab(LogistaeViae.CREATIVE_TAB);
     }
 
     public String getName() {

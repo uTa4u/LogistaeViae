@@ -3,6 +3,7 @@ package su.uTa4u.logistaeviae;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.renderer.block.statemap.StateMapperBase;
+import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.ModelBakeEvent;
 import net.minecraftforge.client.event.ModelRegistryEvent;
@@ -37,6 +38,8 @@ public final class LogistaeViae {
 
     @Mod.Instance
     public static LogistaeViae instance;
+
+    public static final CreativeTabs CREATIVE_TAB = new LogistaeViaeTab();
 
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
