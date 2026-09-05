@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+// TODO: clean this up
 public final class PipeModelManager {
     public static final int BASE_INSTANCE_COUNT = 64;
     public static final int QUAD_COUNT = 6;

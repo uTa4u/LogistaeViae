@@ -7,5 +7,5 @@
     "compatibilityLevel": "JAVA_8",
     "mixins": [],
     "server": [],
-    "client": ["ModelLoaderMixin", "VanillaModelWrapperInvoker"]
+    "client": ["ModelLoaderMixin"]
 }
