@@ -64,6 +64,10 @@ public class BlockPipe extends Block implements ITileEntityProvider {
         return this.texture;
     }
 
+    public int getGuiID() {
+        return this.guiID;
+    }
+
     @Override
     public boolean onBlockActivated(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing facing, float hitX, float hitY, float hitZ) {
         if (this.guiID == GuiHandler.INVALID_GUI_ID) return false;

@@ -1,6 +1,5 @@
 package su.uTa4u.logistaeviae.inventory;
 
-import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.util.math.BlockPos;
@@ -10,6 +9,7 @@ import su.uTa4u.logistaeviae.LogistaeViae;
 import su.uTa4u.logistaeviae.inventory.container.AbstractContainerPipe;
 import su.uTa4u.logistaeviae.inventory.container.ContainerProviderPipe;
 import su.uTa4u.logistaeviae.inventory.container.ContainerSupplierPipe;
+import su.uTa4u.logistaeviae.inventory.gui.AbstractGuiPipe;
 import su.uTa4u.logistaeviae.inventory.gui.GuiProviderPipe;
 import su.uTa4u.logistaeviae.inventory.gui.GuiSupplierPipe;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
@@ -21,7 +21,7 @@ import java.util.function.BiFunction;
 public final class GuiHandler implements IGuiHandler {
 
     private static final ArrayList<BiFunction<InventoryPlayer, TileEntityPipe, AbstractContainerPipe>> SERVER_GUI_BY_ID = new ArrayList<>();
-    private static final ArrayList<BiFunction<InventoryPlayer, TileEntityPipe, GuiContainer>> CLIENT_GUI_BY_ID = new ArrayList<>();
+    private static final ArrayList<BiFunction<InventoryPlayer, TileEntityPipe, AbstractGuiPipe>> CLIENT_GUI_BY_ID = new ArrayList<>();
 
     public static final int INVALID_GUI_ID = -1;
     public static final int PIPE_PROVIDER_ID = registerGui(ContainerProviderPipe::new, GuiProviderPipe::new);
@@ -29,7 +29,7 @@ public final class GuiHandler implements IGuiHandler {
 
     private static int registerGui(
             BiFunction<InventoryPlayer, TileEntityPipe, AbstractContainerPipe> serverSupplier,
-            BiFunction<InventoryPlayer, TileEntityPipe, GuiContainer> clientSupplier
+            BiFunction<InventoryPlayer, TileEntityPipe, AbstractGuiPipe> clientSupplier
     ) {
         int serverID = SERVER_GUI_BY_ID.size();
         if (SERVER_GUI_BY_ID.add(serverSupplier)) {
@@ -63,8 +63,13 @@ public final class GuiHandler implements IGuiHandler {
         if (ID == INVALID_GUI_ID) return null;
         TileEntityPipe pipe = TileEntityPipe.getOrNull(world.getTileEntity(new BlockPos(x, y, z)));
         if (pipe == null) return null;
-        BiFunction<InventoryPlayer, TileEntityPipe, GuiContainer> func = CLIENT_GUI_BY_ID.get(ID);
+        BiFunction<InventoryPlayer, TileEntityPipe, AbstractGuiPipe> func = CLIENT_GUI_BY_ID.get(ID);
         if (func == null) return null;
         return func.apply(player.inventory, pipe);
+    }
+
+    @Nullable
+    public static BiFunction<InventoryPlayer, TileEntityPipe, AbstractContainerPipe> getServerBiFunction(int ID) {
+        return SERVER_GUI_BY_ID.get(ID);
     }
 }
