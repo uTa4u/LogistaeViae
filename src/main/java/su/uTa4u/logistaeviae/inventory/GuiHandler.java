@@ -1,7 +1,5 @@
 package su.uTa4u.logistaeviae.inventory;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -17,32 +15,34 @@ import su.uTa4u.logistaeviae.inventory.gui.GuiSupplierPipe;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.function.BiFunction;
 
 public final class GuiHandler implements IGuiHandler {
 
-    private final Int2ObjectMap<BiFunction<InventoryPlayer, TileEntityPipe, AbstractContainerPipe>> serverGuiById = new Int2ObjectArrayMap<>();
-    private final Int2ObjectMap<BiFunction<InventoryPlayer, TileEntityPipe, GuiContainer>> clientGuiById = new Int2ObjectArrayMap<>();
+    private static final ArrayList<BiFunction<InventoryPlayer, TileEntityPipe, AbstractContainerPipe>> SERVER_GUI_BY_ID = new ArrayList<>();
+    private static final ArrayList<BiFunction<InventoryPlayer, TileEntityPipe, GuiContainer>> CLIENT_GUI_BY_ID = new ArrayList<>();
 
     public static final int INVALID_GUI_ID = -1;
-    public static final int PIPE_PROVIDER_ID = 0;
-    public static final int PIPE_SUPPLIER_ID = 1;
+    public static final int PIPE_PROVIDER_ID = registerGui(ContainerProviderPipe::new, GuiProviderPipe::new);
+    public static final int PIPE_SUPPLIER_ID = registerGui(ContainerSupplierPipe::new, GuiSupplierPipe::new);
 
-    public GuiHandler() {
-        this.registerGui(PIPE_PROVIDER_ID, ContainerProviderPipe::new, GuiProviderPipe::new);
-        this.registerGui(PIPE_SUPPLIER_ID, ContainerSupplierPipe::new, GuiSupplierPipe::new);
-    }
-
-    private void registerGui(
-            int ID,
+    private static int registerGui(
             BiFunction<InventoryPlayer, TileEntityPipe, AbstractContainerPipe> serverSupplier,
             BiFunction<InventoryPlayer, TileEntityPipe, GuiContainer> clientSupplier
     ) {
-        if (this.serverGuiById.put(ID, serverSupplier) != null) {
-            LogistaeViae.LOGGER.warn("Server gui with id = {} was overwritten", ID);
+        int serverID = SERVER_GUI_BY_ID.size();
+        if (SERVER_GUI_BY_ID.add(serverSupplier)) {
+            LogistaeViae.LOGGER.warn("Server gui with id = {} was overwritten", serverID);
         }
-        if (this.clientGuiById.put(ID, clientSupplier) != null) {
-            LogistaeViae.LOGGER.warn("Client gui with id = {} was overwritten", ID);
+        int clientID = CLIENT_GUI_BY_ID.size();
+        if (CLIENT_GUI_BY_ID.add(clientSupplier)) {
+            LogistaeViae.LOGGER.warn("Client gui with id = {} was overwritten", clientID);
+        }
+        if (serverID == clientID) {
+            return serverID;
+        } else {
+            throw new RuntimeException("ID mismatch");
         }
     }
 
@@ -52,7 +52,7 @@ public final class GuiHandler implements IGuiHandler {
         if (ID == INVALID_GUI_ID) return null;
         TileEntityPipe pipe = TileEntityPipe.getOrNull(world.getTileEntity(new BlockPos(x, y, z)));
         if (pipe == null) return null;
-        BiFunction<InventoryPlayer, TileEntityPipe, AbstractContainerPipe> func = this.serverGuiById.get(ID);
+        BiFunction<InventoryPlayer, TileEntityPipe, AbstractContainerPipe> func = SERVER_GUI_BY_ID.get(ID);
         if (func == null) return null;
         return func.apply(player.inventory, pipe);
     }
@@ -63,7 +63,7 @@ public final class GuiHandler implements IGuiHandler {
         if (ID == INVALID_GUI_ID) return null;
         TileEntityPipe pipe = TileEntityPipe.getOrNull(world.getTileEntity(new BlockPos(x, y, z)));
         if (pipe == null) return null;
-        BiFunction<InventoryPlayer, TileEntityPipe, GuiContainer> func = this.clientGuiById.get(ID);
+        BiFunction<InventoryPlayer, TileEntityPipe, GuiContainer> func = CLIENT_GUI_BY_ID.get(ID);
         if (func == null) return null;
         return func.apply(player.inventory, pipe);
     }
