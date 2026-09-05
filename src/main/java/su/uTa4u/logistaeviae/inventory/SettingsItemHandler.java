@@ -1,7 +1,6 @@
-package su.uTa4u.logistaeviae.gui;
+package su.uTa4u.logistaeviae.inventory;
 
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
 
 import javax.annotation.Nonnull;

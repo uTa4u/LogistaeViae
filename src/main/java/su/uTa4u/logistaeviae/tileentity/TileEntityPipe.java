@@ -10,7 +10,6 @@ import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.items.ItemStackHandler;
 import su.uTa4u.logistaeviae.block.BlockPipe;
-import su.uTa4u.logistaeviae.gui.SettingsItemHandler;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

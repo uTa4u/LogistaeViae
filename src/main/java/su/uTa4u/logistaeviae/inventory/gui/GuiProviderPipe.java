@@ -1,24 +1,24 @@
-package su.uTa4u.logistaeviae.gui;
+package su.uTa4u.logistaeviae.inventory.gui;
 
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.util.ResourceLocation;
 import su.uTa4u.logistaeviae.LogistaeViae;
-import su.uTa4u.logistaeviae.gui.container.AbstractContainerPipe;
+import su.uTa4u.logistaeviae.inventory.container.ContainerProviderPipe;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
-public class GuiPipe extends GuiContainer {
+public class GuiProviderPipe extends GuiContainer {
+
+    private static final ResourceLocation GUI_TEXTURE = LogistaeViae.resource("textures/gui/provider.png");
 
     private final InventoryPlayer playerInv;
     private final TileEntityPipe pipe;
-    private final ResourceLocation texture;
 
-    public GuiPipe(AbstractContainerPipe inventorySlots, InventoryPlayer playerInv, TileEntityPipe pipe) {
-        super(inventorySlots);
+    public GuiProviderPipe(InventoryPlayer playerInv, TileEntityPipe pipe) {
+        super(new ContainerProviderPipe(playerInv, pipe));
         this.playerInv = playerInv;
         this.pipe = pipe;
-        this.texture = LogistaeViae.resource("textures/gui/" + this.pipe.getBlockType().getName() + ".png");
     }
 
     @Override
@@ -37,7 +37,7 @@ public class GuiPipe extends GuiContainer {
     @Override
     protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
         GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-        this.mc.getTextureManager().bindTexture(this.texture);
+        this.mc.getTextureManager().bindTexture(GUI_TEXTURE);
         this.drawTexturedModalRect(
                 (this.width - this.xSize) / 2,
                 (this.height - this.ySize) / 2,
@@ -47,5 +47,4 @@ public class GuiPipe extends GuiContainer {
                 this.ySize
         );
     }
-
 }

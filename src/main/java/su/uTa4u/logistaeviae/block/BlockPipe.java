@@ -25,7 +25,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import su.uTa4u.logistaeviae.LogistaeViae;
 import su.uTa4u.logistaeviae.Tags;
 import su.uTa4u.logistaeviae.model.PipeModelManager;
-import su.uTa4u.logistaeviae.gui.GuiHandler;
+import su.uTa4u.logistaeviae.inventory.GuiHandler;
 import su.uTa4u.logistaeviae.logic.PipeLocation;
 import su.uTa4u.logistaeviae.logic.PipeNetwork;
 import su.uTa4u.logistaeviae.logic.PipeNetworkSavedData;

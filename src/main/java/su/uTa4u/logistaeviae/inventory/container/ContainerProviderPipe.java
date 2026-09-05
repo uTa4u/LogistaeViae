@@ -1,12 +1,12 @@
-package su.uTa4u.logistaeviae.gui.container;
+package su.uTa4u.logistaeviae.inventory.container;
 
 import net.minecraft.entity.player.InventoryPlayer;
-import su.uTa4u.logistaeviae.gui.GhostSlot;
+import su.uTa4u.logistaeviae.inventory.GhostSlot;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
-public class ContainerSupplierPipe extends AbstractContainerPipe {
+public class ContainerProviderPipe extends AbstractContainerPipe {
 
-    public ContainerSupplierPipe(InventoryPlayer playerInv, TileEntityPipe pipe) {
+    public ContainerProviderPipe(InventoryPlayer playerInv, TileEntityPipe pipe) {
         super(playerInv, pipe);
 
         // Pipe slots

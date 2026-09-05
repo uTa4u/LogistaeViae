@@ -1,4 +1,4 @@
-package su.uTa4u.logistaeviae.gui;
+package su.uTa4u.logistaeviae.inventory;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -9,9 +9,11 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.network.IGuiHandler;
 import su.uTa4u.logistaeviae.LogistaeViae;
-import su.uTa4u.logistaeviae.gui.container.AbstractContainerPipe;
-import su.uTa4u.logistaeviae.gui.container.ContainerProviderPipe;
-import su.uTa4u.logistaeviae.gui.container.ContainerSupplierPipe;
+import su.uTa4u.logistaeviae.inventory.container.AbstractContainerPipe;
+import su.uTa4u.logistaeviae.inventory.container.ContainerProviderPipe;
+import su.uTa4u.logistaeviae.inventory.container.ContainerSupplierPipe;
+import su.uTa4u.logistaeviae.inventory.gui.GuiProviderPipe;
+import su.uTa4u.logistaeviae.inventory.gui.GuiSupplierPipe;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 import javax.annotation.Nullable;
@@ -27,19 +29,18 @@ public final class GuiHandler implements IGuiHandler {
     public static final int PIPE_SUPPLIER_ID = 1;
 
     public GuiHandler() {
-        this.registerGui(PIPE_PROVIDER_ID, ContainerProviderPipe::new);
-        this.registerGui(PIPE_SUPPLIER_ID, ContainerSupplierPipe::new);
+        this.registerGui(PIPE_PROVIDER_ID, ContainerProviderPipe::new, GuiProviderPipe::new);
+        this.registerGui(PIPE_SUPPLIER_ID, ContainerSupplierPipe::new, GuiSupplierPipe::new);
     }
 
     private void registerGui(
             int ID,
-            BiFunction<InventoryPlayer, TileEntityPipe, AbstractContainerPipe> serverSupplier
+            BiFunction<InventoryPlayer, TileEntityPipe, AbstractContainerPipe> serverSupplier,
+            BiFunction<InventoryPlayer, TileEntityPipe, GuiContainer> clientSupplier
     ) {
         if (this.serverGuiById.put(ID, serverSupplier) != null) {
             LogistaeViae.LOGGER.warn("Server gui with id = {} was overwritten", ID);
         }
-        BiFunction<InventoryPlayer, TileEntityPipe, GuiContainer> clientSupplier =
-                (playerInv, pipe) -> new GuiPipe(serverSupplier.apply(playerInv, pipe), playerInv, pipe);
         if (this.clientGuiById.put(ID, clientSupplier) != null) {
             LogistaeViae.LOGGER.warn("Client gui with id = {} was overwritten", ID);
         }
