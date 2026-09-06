@@ -5,7 +5,6 @@ import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.network.IGuiHandler;
-import su.uTa4u.logistaeviae.LogistaeViae;
 import su.uTa4u.logistaeviae.inventory.container.AbstractContainerPipe;
 import su.uTa4u.logistaeviae.inventory.container.ContainerProviderPipe;
 import su.uTa4u.logistaeviae.inventory.container.ContainerSupplierPipe;
@@ -32,18 +31,13 @@ public final class GuiHandler implements IGuiHandler {
             BiFunction<InventoryPlayer, TileEntityPipe, AbstractGuiPipe> clientSupplier
     ) {
         int serverID = SERVER_GUI_BY_ID.size();
-        if (SERVER_GUI_BY_ID.add(serverSupplier)) {
-            LogistaeViae.LOGGER.warn("Server gui with id = {} was overwritten", serverID);
-        }
         int clientID = CLIENT_GUI_BY_ID.size();
-        if (CLIENT_GUI_BY_ID.add(clientSupplier)) {
-            LogistaeViae.LOGGER.warn("Client gui with id = {} was overwritten", clientID);
+        if (serverID != clientID) {
+            throw new RuntimeException("ID mismatch in GuiHandler! Server: " + serverID + " Client: " + clientID);
         }
-        if (serverID == clientID) {
-            return serverID;
-        } else {
-            throw new RuntimeException("ID mismatch");
-        }
+        SERVER_GUI_BY_ID.add(serverSupplier);
+        CLIENT_GUI_BY_ID.add(clientSupplier);
+        return serverID;
     }
 
     @Nullable
