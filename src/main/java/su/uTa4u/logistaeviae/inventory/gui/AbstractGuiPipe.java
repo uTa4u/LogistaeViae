@@ -17,7 +17,7 @@ public abstract class AbstractGuiPipe extends GuiContainer {
     private final InventoryPlayer playerInv;
     private final TileEntityPipe pipe;
 
-    public AbstractGuiPipe(InventoryPlayer playerInv, TileEntityPipe pipe) {
+    protected AbstractGuiPipe(InventoryPlayer playerInv, TileEntityPipe pipe) {
         this(playerInv, pipe, pipe.getBlockType());
     }
 

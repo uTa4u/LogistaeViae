@@ -9,5 +9,4 @@ public class GuiSupplierPipe extends AbstractGuiPipe {
         super(playerInv, pipe);
     }
 
-
 }

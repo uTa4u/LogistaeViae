@@ -89,9 +89,9 @@ public class BlockPipe extends Block implements ITileEntityProvider {
     @Nonnull
     public IBlockState getExtendedState(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) {
         IExtendedBlockState ext = (IExtendedBlockState) state;
-        TileEntity te = world.getTileEntity(pos);
-        if (te instanceof TileEntityPipe) {
-            ext = ext.withProperty(CONNECTION_PROP, ((TileEntityPipe) te).packConnections());
+        TileEntityPipe pipe = TileEntityPipe.getOrNull(world.getTileEntity(pos));
+        if (pipe != null) {
+            ext = ext.withProperty(CONNECTION_PROP, pipe.packConnections());
         }
         return ext;
     }
@@ -123,7 +123,7 @@ public class BlockPipe extends Block implements ITileEntityProvider {
                             foundNetwork.merge(nbourNetwork);
                         }
                     }
-                } else if (pipe.canConnect(te)) {
+                } else if (te != null && pipe.canConnect(te, facing.getOpposite())) {
                     pipe.connect(facing);
                 }
             }
@@ -158,9 +158,9 @@ public class BlockPipe extends Block implements ITileEntityProvider {
     @SuppressWarnings("deprecation")
     @Nonnull
     public AxisAlignedBB getBoundingBox(@Nonnull IBlockState state, @Nonnull IBlockAccess source, @Nonnull BlockPos pos) {
-        TileEntity te = source.getTileEntity(pos);
-        if (te instanceof TileEntityPipe) {
-            return AABB_BY_CONNECTION.get(((TileEntityPipe) te).packConnections());
+        TileEntityPipe pipe = TileEntityPipe.getOrNull(source.getTileEntity(pos));
+        if (pipe != null) {
+            return AABB_BY_CONNECTION.get(pipe.packConnections());
         }
         return super.getBoundingBox(state, source, pos);
     }

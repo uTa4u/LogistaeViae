@@ -8,6 +8,7 @@ import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.util.Constants;
+import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import su.uTa4u.logistaeviae.block.BlockPipe;
 
@@ -46,8 +47,8 @@ public class TileEntityPipe extends TileEntity {
         return (BlockPipe) block;
     }
 
-    public boolean canConnect(TileEntity te) {
-        return false;
+    public boolean canConnect(TileEntity te, EnumFacing facing) {
+        return te.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, facing);
     }
 
     public void connect(@Nonnull EnumFacing facing) {
