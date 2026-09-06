@@ -7,12 +7,13 @@ import net.minecraftforge.items.SlotItemHandler;
 
 import javax.annotation.Nonnull;
 
+// TODO: make shift/slide shortcuts work
+// TODO: make item-from-jei shortcut work
 public class GhostSlot extends SlotItemHandler {
 
     public GhostSlot(IItemHandler itemHandler, int index, int xPosition, int yPosition) {
         super(itemHandler, index, xPosition, yPosition);
     }
-
 
     @Override
     public boolean isItemValid(@Nonnull ItemStack stack) {

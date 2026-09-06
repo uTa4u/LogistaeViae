@@ -17,6 +17,16 @@ import javax.annotation.Nullable;
 import java.util.EnumSet;
 import java.util.Set;
 
+/*
+    TODO list for the mod in general:
+        1. Add all missing blocks/items/guis
+        2. Make network data structure easily changeable for testing
+        3. Move pathfinding algorithm from PipeRoute
+        4. Implement OrderTable and order fullfilment algorithm
+        5. Implement pipe logic in a form of Functional Interfaces
+        6. Implement smart logic for ticking the network
+        7. Make network require energy
+ */
 public class TileEntityPipe extends TileEntity {
     public static final String TAG_CONNECTIONS = "Connections";
     public static final String TAG_ITEMS = "Items";
@@ -121,6 +131,7 @@ public class TileEntityPipe extends TileEntity {
         return data;
     }
 
+    // TODO: make this a setter for connections field
     public static Set<EnumFacing> unpackConnections(byte packedConnections) {
         Set<EnumFacing> connections = EnumSet.noneOf(EnumFacing.class);
         for (EnumFacing facing : EnumFacing.VALUES) {
