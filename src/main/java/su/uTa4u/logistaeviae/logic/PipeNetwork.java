@@ -21,8 +21,10 @@ public final class PipeNetwork {
     private static final String TAG_ID = "Id";
     private static final String TAG_PIPES = "Pipes";
 
+    // TODO: encapsulate all of these into a separate class for ease of change for testing
     private final Map<PipeLocation, Map<PipeLocation, PipeRoute>> routeCache = new HashMap<>();
     private final Set<PipeLocation> pipes = new HashSet<>();
+    private final Set<PipeLocation> orderPlacerPipes = new HashSet<>();
     private final Set<PipeLocation> teleportPipes = new HashSet<>();
     private final Map<PipeLocation, EnumSet<EnumFacing>> pipeConnections = new HashMap<>();
     private final PipeNetworkSavedData savedData;

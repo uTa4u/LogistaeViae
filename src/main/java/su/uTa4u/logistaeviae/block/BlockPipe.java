@@ -24,15 +24,18 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import su.uTa4u.logistaeviae.LogistaeViae;
 import su.uTa4u.logistaeviae.Tags;
-import su.uTa4u.logistaeviae.model.PipeModelManager;
 import su.uTa4u.logistaeviae.inventory.GuiHandler;
-import su.uTa4u.logistaeviae.logic.type.PipeLocation;
 import su.uTa4u.logistaeviae.logic.PipeNetwork;
 import su.uTa4u.logistaeviae.logic.PipeNetworkSavedData;
+import su.uTa4u.logistaeviae.logic.type.OrderPlacer;
+import su.uTa4u.logistaeviae.logic.type.PipeLocation;
+import su.uTa4u.logistaeviae.model.PipeModelManager;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.List;
+import java.util.function.Supplier;
 
 // TODO: can't be placed if player is in the same block despite AABB allowing it
 public class BlockPipe extends Block implements ITileEntityProvider {
@@ -43,17 +46,18 @@ public class BlockPipe extends Block implements ITileEntityProvider {
 
     private final String name;
     private final ResourceLocation texture;
-    // TODO: not all pipes will have a gui so instead of using -1 as invalid gui we should have a subclass probably
     private final int guiID;
+    private final Supplier<List<OrderPlacer>> orderPlacersBlueprint;
 
-    public BlockPipe(String name, int guiID) {
+    public BlockPipe(String name, int guiID, Supplier<List<OrderPlacer>> orderPlacersBlueprint) {
         super(Material.CIRCUITS);
-        this.name = name;
         this.setRegistryName(Tags.MOD_ID, "pipe/" + name);
         this.setTranslationKey(Tags.MOD_ID + ".pipe_" + name);
+        this.setCreativeTab(LogistaeViae.CREATIVE_TAB);
+        this.name = name;
         this.texture = LogistaeViae.resource("block/pipe/" + name);
         this.guiID = guiID;
-        this.setCreativeTab(LogistaeViae.CREATIVE_TAB);
+        this.orderPlacersBlueprint = orderPlacersBlueprint;
     }
 
     public String getName() {
@@ -191,7 +195,7 @@ public class BlockPipe extends Block implements ITileEntityProvider {
     @Nullable
     @Override
     public TileEntity createNewTileEntity(@Nonnull World world, int meta) {
-        return new TileEntityPipe();
+        return new TileEntityPipe(this.orderPlacersBlueprint.get());
     }
 
     // TODO: can we have actually accurate AABBs?

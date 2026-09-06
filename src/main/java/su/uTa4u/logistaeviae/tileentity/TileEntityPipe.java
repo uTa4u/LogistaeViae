@@ -11,10 +11,13 @@ import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import su.uTa4u.logistaeviae.block.BlockPipe;
+import su.uTa4u.logistaeviae.logic.type.OrderPlacer;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
 /*
@@ -40,9 +43,25 @@ public class TileEntityPipe extends TileEntity {
             TileEntityPipe.this.markDirty();
         }
     };
+    @Nonnull
+    private final List<OrderPlacer> orderPlacers;
 
+    // Required for TE to be correctly loaded
     public TileEntityPipe() {
+        this(Collections.emptyList());
+    }
+
+    public TileEntityPipe(@Nonnull List<OrderPlacer> orderPlacers) {
         super();
+        this.orderPlacers = orderPlacers;
+    }
+
+    public void forEachOrderPlacer() {
+        for (OrderPlacer p : this.orderPlacers) {
+            if (p != null) {
+                p.place();
+            }
+        }
     }
 
     public ItemStackHandler getItems() {

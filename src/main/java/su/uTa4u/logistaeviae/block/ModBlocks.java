@@ -14,6 +14,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import su.uTa4u.logistaeviae.LogistaeViae;
 import su.uTa4u.logistaeviae.inventory.GuiHandler;
+import su.uTa4u.logistaeviae.logic.type.OrderPlacer;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 import java.util.ArrayList;
@@ -30,11 +31,10 @@ public final class ModBlocks {
 
     public static final List<BlockPipe> PIPES = new ArrayList<>();
 
-    public static final Block PIPE_COBBLESTONE = registerPipe("cobblestone");
-    public static final Block PIPE_BASIC = registerPipe("basic");
-    // TODO: make pipe with gui a separate class
-    public static final Block PIPE_PROVIDER = registerPipeWithGui("provider", GuiHandler.PIPE_PROVIDER_ID);
-    public static final Block PIPE_SUPPLIER = registerPipeWithGui("supplier", GuiHandler.PIPE_SUPPLIER_ID);
+    public static final Block PIPE_COBBLESTONE = registerPipe("cobblestone", OrderPlacer.getBlueprint());
+    public static final Block PIPE_BASIC = registerPipe("basic", OrderPlacer.getBlueprint());
+    public static final Block PIPE_PROVIDER = registerPipeWithGui("provider", GuiHandler.PIPE_PROVIDER_ID, OrderPlacer.getBlueprint(OrderPlacer.PROVIDER));
+    public static final Block PIPE_SUPPLIER = registerPipeWithGui("supplier", GuiHandler.PIPE_SUPPLIER_ID, OrderPlacer.getBlueprint(OrderPlacer.SUPPLIER));
 
     private static Block register(Supplier<Block> supplier) {
         Block block = supplier.get();
@@ -42,12 +42,16 @@ public final class ModBlocks {
         return block;
     }
 
-    private static Block registerPipe(String name) {
-        return registerPipeWithGui(name, GuiHandler.INVALID_GUI_ID);
+    private static Block registerPipe(String name, Supplier<List<OrderPlacer>> orderPlacersBlueprint) {
+        return registerPipeWithGui(name, GuiHandler.INVALID_GUI_ID, orderPlacersBlueprint);
     }
 
-    private static Block registerPipeWithGui(String name, int guiID) {
-        BlockPipe block = new BlockPipe(name, guiID);
+    private static Block registerPipeWithGui(
+            String name,
+            int guiID,
+            Supplier<List<OrderPlacer>> orderPlacersBlueprint
+    ) {
+        BlockPipe block = new BlockPipe(name, guiID, orderPlacersBlueprint);
         BLOCKS.add(block);
         PIPES.add(block);
         return block;
