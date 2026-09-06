@@ -1,4 +1,4 @@
-package su.uTa4u.logistaeviae.logic;
+package su.uTa4u.logistaeviae.logic.type;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTUtil;
@@ -18,7 +18,7 @@ public final class PipeLocation {
         this.pos = pos;
     }
 
-    PipeLocation(NBTTagCompound nbt) {
+    public PipeLocation(NBTTagCompound nbt) {
         this(nbt.getInteger(TAG_DIMENSION), NBTUtil.getPosFromTag(nbt.getCompoundTag(TAG_POSITION)));
     }
 
@@ -29,7 +29,7 @@ public final class PipeLocation {
     }
 
     @Nonnull
-    NBTTagCompound serializeNBT() {
+    public NBTTagCompound serializeNBT() {
         NBTTagCompound nbt = new NBTTagCompound();
         nbt.setInteger(TAG_DIMENSION, this.dim);
         nbt.setTag(TAG_POSITION, NBTUtil.createPosTag(this.pos));

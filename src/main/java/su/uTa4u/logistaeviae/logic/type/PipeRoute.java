@@ -1,4 +1,6 @@
-package su.uTa4u.logistaeviae.logic;
+package su.uTa4u.logistaeviae.logic.type;
+
+import su.uTa4u.logistaeviae.logic.PipeNetwork;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -19,7 +21,7 @@ public final class PipeRoute {
     }
 
     @Nullable
-    static PipeRoute compute(PipeNetwork pipeNetwork, PipeLocation from, PipeLocation to) {
+    public static PipeRoute compute(PipeNetwork pipeNetwork, PipeLocation from, PipeLocation to) {
         PriorityQueue<PathNode> openSet = new PriorityQueue<>();
         Map<PipeLocation, PathNode> allNodes = new HashMap<>();
 

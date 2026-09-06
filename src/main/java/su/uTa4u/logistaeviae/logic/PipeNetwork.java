@@ -5,6 +5,8 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.util.Constants;
+import su.uTa4u.logistaeviae.logic.type.PipeLocation;
+import su.uTa4u.logistaeviae.logic.type.PipeRoute;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

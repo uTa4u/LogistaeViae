@@ -13,6 +13,7 @@ import net.minecraft.world.storage.MapStorage;
 import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.common.util.Constants;
 import su.uTa4u.logistaeviae.Tags;
+import su.uTa4u.logistaeviae.logic.type.PipeLocation;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
