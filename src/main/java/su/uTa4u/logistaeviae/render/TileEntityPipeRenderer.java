@@ -12,6 +12,7 @@ import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 import javax.annotation.Nonnull;
 
+// TODO: try again rendering without using gl state to utilize FastTESR
 public final class TileEntityPipeRenderer extends TileEntitySpecialRenderer<TileEntityPipe> {
 
     @Override

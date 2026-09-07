@@ -155,15 +155,17 @@ public class BlockPipe extends Block implements ITileEntityProvider {
     @Override
     @SuppressWarnings("deprecation")
     public void neighborChanged(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull Block block, @Nonnull BlockPos fromPos) {
-        TileEntityPipe pipe = TileEntityPipe.getOrNull(world.getTileEntity(pos));
-        if (pipe == null) return;
+        if (!world.isRemote) {
+            TileEntityPipe pipe = TileEntityPipe.getOrNull(world.getTileEntity(pos));
+            if (pipe == null) return;
 
-        EnumFacing facing = VecUtils.getFacingFromNeighbouringPos(pos, fromPos);
-        TileEntity nbour = world.getTileEntity(fromPos);
-        if (nbour instanceof TileEntityPipe || pipe.canConnect(nbour, facing)) {
-            pipe.connect(facing);
-        } else {
-            pipe.disconnect(facing);
+            EnumFacing facing = VecUtils.getFacingFromNeighbouringPos(pos, fromPos);
+            TileEntity nbour = world.getTileEntity(fromPos);
+            if (nbour instanceof TileEntityPipe || pipe.canConnect(nbour, facing)) {
+                pipe.connect(facing);
+            } else {
+                pipe.disconnect(facing);
+            }
         }
     }
 
