@@ -3,14 +3,11 @@ package su.uTa4u.logistaeviae.model;
 import com.google.common.collect.ImmutableList;
 import it.unimi.dsi.fastutil.bytes.Byte2ObjectArrayMap;
 import it.unimi.dsi.fastutil.bytes.Byte2ObjectMap;
-import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
-import su.uTa4u.logistaeviae.block.BlockPipe;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 import java.util.EnumMap;
@@ -18,73 +15,32 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// TODO: clean this up
+// TODO: maybe remove this class and move everything into PipeBakedModel
 public final class PipeModelManager {
     public static final int BASE_INSTANCE_COUNT = 64;
-    public static final int QUAD_COUNT = 6;
-    public static final int INDICES_COUNT = PipeQuad.INDEX_COUNT * QUAD_COUNT;
 
     private static final float FROM = 0.25f;
     private static final float TOOO = 0.75f;
 
-    private static final Byte2ObjectMap<EnumMap<EnumFacing, PipeQuad>> MODEL_BY_CONNECTIONS = new Byte2ObjectArrayMap<>();
-    private static final Map<TextureAtlasSprite, Byte2ObjectMap<EnumMap<EnumFacing, PipeQuad>>> TEXTURED_MODEL_CACHE = new HashMap<>();
-
-    private static final Byte2ObjectMap<List<BakedQuad>> BAKEDMODEL_BY_CONNECTIONS = new Byte2ObjectArrayMap<>();
     private static final Map<TextureAtlasSprite, Byte2ObjectMap<List<BakedQuad>>> TEXTURED_BAKEDMODEL_CACHE = new HashMap<>();
-
-    static {
-        for (byte i = 0; i < BASE_INSTANCE_COUNT; i++) {
-            EnumMap<EnumFacing, PipeQuad> quads = computeQuadsForPipe(i);
-            MODEL_BY_CONNECTIONS.put(i, quads);
-            ImmutableList.Builder<BakedQuad> builder = new ImmutableList.Builder<>();
-            for (EnumFacing dir : EnumFacing.VALUES) {
-                builder.add(quads.get(dir).bake(dir));
-            }
-            BAKEDMODEL_BY_CONNECTIONS.put(i, builder.build());
-        }
-    }
-
-    public static EnumMap<EnumFacing, PipeQuad> getTexturedQuadsForPipe(TileEntityPipe pipe) {
-        return getTexturedQuadsForPipe(Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(getTextureLoc(pipe)), pipe.packConnections());
-    }
-
-    public static EnumMap<EnumFacing, PipeQuad> getTexturedQuadsForPipe(TextureAtlasSprite tex, byte packedConnections) {
-        if (!TEXTURED_MODEL_CACHE.containsKey(tex)) {
-            EnumMap<EnumFacing, PipeQuad> model = getQuadsForPipe(packedConnections);
-            // Need deep copy
-            EnumMap<EnumFacing, PipeQuad> modelCopy = new EnumMap<>(EnumFacing.class);
-            for (Map.Entry<EnumFacing, PipeQuad> entry : model.entrySet()) {
-                modelCopy.put(entry.getKey(), PipeQuad.withSamePos(entry.getValue()));
-            }
-            texture(modelCopy, tex);
-            TEXTURED_MODEL_CACHE.getOrDefault(tex, new Byte2ObjectArrayMap<>()).put(packedConnections, modelCopy);
-            return modelCopy;
-        }
-        return TEXTURED_MODEL_CACHE.get(tex).get(packedConnections);
-    }
-
-    public static EnumMap<EnumFacing, PipeQuad> getQuadsForPipe(byte packedConnections) {
-        return MODEL_BY_CONNECTIONS.get(packedConnections);
-    }
 
     public static List<BakedQuad> getTexturedBakedModelForPipe(ResourceLocation texLoc, byte packedConnections) {
         TextureAtlasSprite tex = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(texLoc.toString());
-        if (!TEXTURED_BAKEDMODEL_CACHE.containsKey(tex)) {
-            EnumMap<EnumFacing, PipeQuad> model = getTexturedQuadsForPipe(tex, packedConnections);
+
+        Byte2ObjectMap<List<BakedQuad>> modelMap = TEXTURED_BAKEDMODEL_CACHE.computeIfAbsent(tex, i -> new Byte2ObjectArrayMap<>());
+
+        List<BakedQuad> model = modelMap.get(packedConnections);
+        if (model == null) {
+            EnumMap<EnumFacing, PipeQuad> rawModel = computeQuadsForPipe(packedConnections);
+            texture(rawModel, tex);
             ImmutableList.Builder<BakedQuad> builder = new ImmutableList.Builder<>();
-            for (Map.Entry<EnumFacing, PipeQuad> entry : model.entrySet()) {
+            for (Map.Entry<EnumFacing, PipeQuad> entry : rawModel.entrySet()) {
                 builder.add(entry.getValue().bake(entry.getKey()));
             }
-            ImmutableList<BakedQuad> bakedQuads = builder.build();
-            TEXTURED_BAKEDMODEL_CACHE.getOrDefault(tex, new Byte2ObjectArrayMap<>()).put(packedConnections, bakedQuads);
-            return bakedQuads;
+            model = builder.build();
+            modelMap.put(packedConnections, model);
         }
-        return TEXTURED_BAKEDMODEL_CACHE.get(tex).get(packedConnections);
-    }
-
-    public static List<BakedQuad> getBakedModelForPipe(byte packedConnections) {
-        return BAKEDMODEL_BY_CONNECTIONS.get(packedConnections);
+        return model;
     }
 
     private static EnumMap<EnumFacing, PipeQuad> computeQuadsForPipe(byte packedConnections) {
@@ -247,12 +203,6 @@ public final class PipeModelManager {
         return quads;
     }
 
-    public static String getTextureLoc(TileEntityPipe pipe) {
-        Block block = pipe.getBlockType();
-        if (!(block instanceof BlockPipe)) return TextureMap.LOCATION_MISSING_TEXTURE.toString();
-        return ((BlockPipe) block).getTexture().toString();
-    }
-
     // These are not technically correct UV coords, some are flipped
     private static void texture(EnumMap<EnumFacing, PipeQuad> model, TextureAtlasSprite tex) {
         float umin;
@@ -299,7 +249,7 @@ public final class PipeModelManager {
                     vmax = tex.getInterpolatedV(16 * quad.ys[3]);
                     break;
                 default:
-                    throw new IllegalStateException("Unknown EnumFacing value!");
+                    throw new AssertionError("Unknown EnumFacing value!");
             }
             quad.texture(
                     umin, vmin,
