@@ -18,15 +18,13 @@ public final class TileEntityPipeRenderer extends TileEntitySpecialRenderer<Tile
     public void render(@Nonnull TileEntityPipe pipe, double x, double y, double z, float partialTicks, int destroyStage, float alpha) {
         GlStateManager.pushMatrix();
 
-        ItemStack itemStack = new ItemStack(Item.getItemFromBlock(Blocks.SAND));
-
-        RenderItem renderItem = Minecraft.getMinecraft().getRenderItem();
-
         GlStateManager.translate(x + 0.5, y + 0.5, z + 0.5);
         GlStateManager.scale(0.5, 0.5, 0.5);
 
         // TODO: only render if in distance (like 64 blocks or smth)
-        renderItem.renderItem(itemStack, ItemCameraTransforms.TransformType.FIXED);
+//        ItemStack itemStack = new ItemStack(Item.getItemFromBlock(Blocks.SAND));
+//        RenderItem renderItem = Minecraft.getMinecraft().getRenderItem();
+//        renderItem.renderItem(itemStack, ItemCameraTransforms.TransformType.FIXED);
 
         GlStateManager.popMatrix();
     }

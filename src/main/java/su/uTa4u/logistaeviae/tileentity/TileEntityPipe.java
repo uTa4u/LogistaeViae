@@ -76,8 +76,8 @@ public class TileEntityPipe extends TileEntity {
         return (BlockPipe) block;
     }
 
-    public boolean canConnect(TileEntity te, EnumFacing facing) {
-        return te.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, facing);
+    public boolean canConnect(@Nullable TileEntity te, EnumFacing facing) {
+        return te != null && te.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, facing);
     }
 
     public void connect(@Nonnull EnumFacing facing) {
