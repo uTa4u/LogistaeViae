@@ -8,7 +8,6 @@ import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,7 +16,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
-public class Subnet {
+public final class Subnet {
     public static final int SUBNET_SHIFT = 4;
     public static final int SUBNET_MASK = (1 << SUBNET_SHIFT) - 1;
     public static final int COORD_BITS = SUBNET_SHIFT;
@@ -34,7 +33,8 @@ public class Subnet {
     private final List<Node> portals = new ArrayList<>();
     private final PathCache pathCache = new PathCache();
 
-    private boolean dirty = false;
+    private boolean loaded = true;
+    private boolean dirty;
     private int cooldownTicks = 0;
 
     public Subnet(int cx, int cy, int cz) {
@@ -48,14 +48,15 @@ public class Subnet {
         this.cooldownTicks = REBUILD_COOLDOWN;
     }
 
-    public void tick(World world) {
-        if (!this.dirty) return;
-        if (--this.cooldownTicks > 0) return;
-        rebuild(world);
-        this.dirty = false;
+    public void setLoaded(boolean loaded) {
+        this.loaded = loaded;
     }
 
-    private void rebuild(World world) {
+    public void tick(World world) {
+        if (!this.loaded) return;
+        if (!this.dirty) return;
+        if (--this.cooldownTicks > 0) return;
+
         this.nodeMap.clear();
         this.edges.clear();
         this.portals.clear();
@@ -64,8 +65,11 @@ public class Subnet {
         compressEdges(world);
         identifyPortals();
         buildNeighborReferences();
+
+        this.dirty = false;
     }
 
+    // TODO: use Dijksta or even A* instead of BFS
     public List<Edge> findPath(BlockPos startPos, BlockPos endPos) {
         Node start = this.nodeMap.get(startPos);
         Node end = this.nodeMap.get(endPos);
@@ -89,7 +93,7 @@ public class Subnet {
             Node current = queue.poll();
             if (current == end) break;
             for (EnumFacing dir : EnumFacing.VALUES) {
-                Edge edge = current.edgeByDirection[dir.ordinal()];
+                Edge edge = current.getEdge(dir);
                 if (edge == null) continue;
                 Node next = (edge.start == current) ? edge.end : edge.start;
                 if (!predecessors.containsKey(next)) {
@@ -115,18 +119,6 @@ public class Subnet {
         Collections.reverse(path);
         this.pathCache.put(cacheKey, path);
         return path;
-    }
-
-    private List<Edge> getEdgesFrom(Node node) {
-        List<Edge> result = new ArrayList<>();
-        for (Edge edge : this.edges) {
-            if (edge.start == node || edge.end == node) result.add(edge);
-        }
-        return result;
-    }
-
-    private static boolean isPipe(World world, BlockPos pos) {
-        return world.getBlockState(pos).getBlock() instanceof BlockPipe;
     }
 
     private void discoverNodes(World world) {
@@ -162,9 +154,13 @@ public class Subnet {
 
                     if (pipeNeighbors > 2 || canConnect || exitsSubnet) {
                         Node node = new Node(cursor.toImmutable());
-                        node.isIntersection = (pipeNeighbors != 2);
-                        node.isInventory = canConnect;
-                        this.nodeMap.put(node.pos, node);
+                        if (pipeNeighbors != 2) {
+                            node.setIntersection(true);
+                        }
+                        if (canConnect) {
+                            node.setInventory(true);
+                        }
+                        this.nodeMap.put(node.getPos(), node);
                     }
                 }
             }
@@ -177,7 +173,7 @@ public class Subnet {
 
         for (Node node : this.nodeMap.values()) {
             for (EnumFacing dir : EnumFacing.VALUES) {
-                BlockPos first = node.pos.offset(dir);
+                BlockPos first = node.getPos().offset(dir);
                 if (!isPipeAt(world, first)) continue;
 
                 Node direct = this.nodeMap.get(first);
@@ -232,17 +228,18 @@ public class Subnet {
     private void addEdge(Node a, Node b, BlockPos[] blocks, Set<Long> seen) {
         long key = undirectedKey(a, b);
         if (seen.add(key)) {
-            this.edges.add(new Edge(a, b, blocks.length, blocks));
+            this.edges.add(new Edge(a, b, blocks));
         }
     }
 
     private void identifyPortals() {
         for (Node node : this.nodeMap.values()) {
-            int x = node.pos.getX() & 15;
-            int y = node.pos.getY() & 15;
-            int z = node.pos.getZ() & 15;
+            BlockPos pos = node.getPos();
+            int x = pos.getX() & SUBNET_MASK;
+            int y = pos.getY() & SUBNET_MASK;
+            int z = pos.getZ() & SUBNET_MASK;
             if (x == 0 || x == 15 || y == 0 || y == 15 || z == 0 || z == 15) {
-                node.isPortal = true;
+                node.setPortal(true);
                 this.portals.add(node);
             }
         }
@@ -250,14 +247,18 @@ public class Subnet {
 
     private void buildNeighborReferences() {
         for (Node node : this.nodeMap.values()) {
-            Arrays.fill(node.edgeByDirection, null);
+            node.clearEdges();
         }
 
         for (Edge edge : this.edges) {
             EnumFacing fromStart = exitFacing(edge.start, edge);
             EnumFacing fromEnd = exitFacing(edge.end, edge);
-            if (fromStart != null) edge.start.edgeByDirection[fromStart.ordinal()] = edge;
-            if (fromEnd != null) edge.end.edgeByDirection[fromEnd.ordinal()] = edge;
+            if (fromStart != null) {
+                edge.start.setEdge(fromStart, edge);
+            }
+            if (fromEnd != null) {
+                edge.end.setEdge(fromEnd, edge);
+            }
         }
     }
 
@@ -268,9 +269,11 @@ public class Subnet {
                     ? edge.pipeBlocks[0]
                     : edge.pipeBlocks[edge.pipeBlocks.length - 1];
         } else {
-            toward = (from == edge.start) ? edge.end.pos : edge.start.pos;
+            toward = (from == edge.start)
+                    ? edge.end.getPos()
+                    : edge.start.getPos();
         }
-        return directionBetween(from.pos, toward);
+        return directionBetween(from.getPos(), toward);
     }
 
     private static EnumFacing directionBetween(BlockPos from, BlockPos to) {
@@ -280,9 +283,13 @@ public class Subnet {
         return null;
     }
 
+    private static boolean isPipe(World world, BlockPos pos) {
+        return world.getBlockState(pos).getBlock() instanceof BlockPipe;
+    }
+
     private static long undirectedKey(Node a, Node b) {
-        int ia = a.id;
-        int ib = b.id;
+        int ia = a.getId();
+        int ib = b.getId();
         if (ia > ib) {
             int t = ia;
             ia = ib;
@@ -292,7 +299,7 @@ public class Subnet {
     }
 
     private static long directedKey(Node start, Node end) {
-        return (((long) start.id) << NODE_ID_BITS) | end.id;
+        return (((long) start.getId()) << NODE_ID_BITS) | end.getId();
     }
 
 }

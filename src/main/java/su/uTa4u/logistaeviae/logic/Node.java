@@ -3,24 +3,64 @@ package su.uTa4u.logistaeviae.logic;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.Arrays;
+
 public final class Node {
-    public final BlockPos pos;
-    public final Edge[] edgeByDirection = new Edge[6];
-    public final int id;
-    public boolean isPortal;
-    public boolean isInventory;
-    public boolean isIntersection;
+    private final BlockPos pos;
+    private final Edge[] edgeByDirection = new Edge[6];
+    private final int id;
+    private boolean isPortal;
+    private boolean isInventory;
+    private boolean isIntersection;
 
     public Node(BlockPos pos) {
         this.pos = pos;
-        this.id = ((pos.getX() & Subnet.SUBNET_MASK) << Subnet.COORD_BITS * 2) |
-                  ((pos.getY() & Subnet.SUBNET_MASK) << Subnet.COORD_BITS * 1) |
-                  ((pos.getZ() & Subnet.SUBNET_MASK) << Subnet.COORD_BITS * 0);
+        this.id = ((pos.getX() & Subnet.SUBNET_MASK) << Subnet.COORD_BITS * 2)
+                | ((pos.getY() & Subnet.SUBNET_MASK) << Subnet.COORD_BITS * 1)
+                | ((pos.getZ() & Subnet.SUBNET_MASK) << Subnet.COORD_BITS * 0);
     }
 
-    public Node neighborIn(EnumFacing dir) {
-        Edge e = this.edgeByDirection[dir.ordinal()];
-        if (e == null) return null;
-        return (e.start == this) ? e.end : e.start;
+    public BlockPos getPos() {
+        return this.pos;
+    }
+
+    public void clearEdges() {
+        Arrays.fill(this.edgeByDirection, null);
+    }
+
+    public Edge getEdge(EnumFacing dir) {
+        return this.edgeByDirection[dir.ordinal()];
+    }
+
+    public void setEdge(EnumFacing dir, Edge edge) {
+        this.edgeByDirection[dir.ordinal()] = edge;
+    }
+
+    public int getId() {
+        return this.id;
+    }
+
+    public boolean isPortal() {
+        return this.isPortal;
+    }
+
+    public void setPortal(boolean portal) {
+        this.isPortal = portal;
+    }
+
+    public boolean isInventory() {
+        return this.isInventory;
+    }
+
+    public void setInventory(boolean inventory) {
+        this.isInventory = inventory;
+    }
+
+    public boolean isIntersection() {
+        return this.isIntersection;
+    }
+
+    public void setIntersection(boolean intersection) {
+        this.isIntersection = intersection;
     }
 }
