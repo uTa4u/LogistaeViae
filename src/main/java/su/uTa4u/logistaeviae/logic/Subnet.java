@@ -30,7 +30,7 @@ public class Subnet {
     public final int cy;
     public final int cz;
     private final Map<BlockPos, Node> nodeMap = new HashMap<>();
-    private final List<CompressedEdge> edges = new ArrayList<>();
+    private final List<Edge> edges = new ArrayList<>();
     private final List<Node> portals = new ArrayList<>();
     private final PathCache pathCache = new PathCache();
 
@@ -66,7 +66,7 @@ public class Subnet {
         buildNeighborReferences();
     }
 
-    public List<CompressedEdge> findPath(BlockPos startPos, BlockPos endPos) {
+    public List<Edge> findPath(BlockPos startPos, BlockPos endPos) {
         Node start = this.nodeMap.get(startPos);
         Node end = this.nodeMap.get(endPos);
         if (start == null || end == null) {
@@ -74,14 +74,14 @@ public class Subnet {
         }
 
         long cacheKey = directedKey(start, end);
-        List<CompressedEdge> cached = this.pathCache.get(cacheKey);
+        List<Edge> cached = this.pathCache.get(cacheKey);
         if (cached != null) {
             return cached;
         }
 
         Queue<Node> queue = new ArrayDeque<>();
         Map<Node, Node> predecessors = new HashMap<>();
-        Map<Node, CompressedEdge> edgeToPredecessor = new HashMap<>();
+        Map<Node, Edge> edgeToPredecessor = new HashMap<>();
         queue.add(start);
         predecessors.put(start, null);
 
@@ -89,7 +89,7 @@ public class Subnet {
             Node current = queue.poll();
             if (current == end) break;
             for (EnumFacing dir : EnumFacing.VALUES) {
-                CompressedEdge edge = current.edgeByDirection[dir.ordinal()];
+                Edge edge = current.edgeByDirection[dir.ordinal()];
                 if (edge == null) continue;
                 Node next = (edge.start == current) ? edge.end : edge.start;
                 if (!predecessors.containsKey(next)) {
@@ -101,12 +101,12 @@ public class Subnet {
         }
 
         if (!predecessors.containsKey(end)) {
-            List<CompressedEdge> empty = Collections.emptyList();
+            List<Edge> empty = Collections.emptyList();
             this.pathCache.put(cacheKey, empty);
             return empty;
         }
 
-        List<CompressedEdge> path = new ArrayList<>();
+        List<Edge> path = new ArrayList<>();
         Node step = end;
         while (step != null && predecessors.get(step) != null) {
             path.add(edgeToPredecessor.get(step));
@@ -117,9 +117,9 @@ public class Subnet {
         return path;
     }
 
-    private List<CompressedEdge> getEdgesFrom(Node node) {
-        List<CompressedEdge> result = new ArrayList<>();
-        for (CompressedEdge edge : this.edges) {
+    private List<Edge> getEdgesFrom(Node node) {
+        List<Edge> result = new ArrayList<>();
+        for (Edge edge : this.edges) {
             if (edge.start == node || edge.end == node) result.add(edge);
         }
         return result;
@@ -232,7 +232,7 @@ public class Subnet {
     private void addEdge(Node a, Node b, BlockPos[] blocks, Set<Long> seen) {
         long key = undirectedKey(a, b);
         if (seen.add(key)) {
-            this.edges.add(new CompressedEdge(a, b, blocks.length, blocks));
+            this.edges.add(new Edge(a, b, blocks.length, blocks));
         }
     }
 
@@ -253,7 +253,7 @@ public class Subnet {
             Arrays.fill(node.edgeByDirection, null);
         }
 
-        for (CompressedEdge edge : this.edges) {
+        for (Edge edge : this.edges) {
             EnumFacing fromStart = exitFacing(edge.start, edge);
             EnumFacing fromEnd = exitFacing(edge.end, edge);
             if (fromStart != null) edge.start.edgeByDirection[fromStart.ordinal()] = edge;
@@ -261,7 +261,7 @@ public class Subnet {
         }
     }
 
-    private static EnumFacing exitFacing(Node from, CompressedEdge edge) {
+    private static EnumFacing exitFacing(Node from, Edge edge) {
         BlockPos toward;
         if (edge.pipeBlocks.length > 0) {
             toward = (from == edge.start)

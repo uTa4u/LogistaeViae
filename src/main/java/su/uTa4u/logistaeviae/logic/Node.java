@@ -5,7 +5,7 @@ import net.minecraft.util.math.BlockPos;
 
 public final class Node {
     public final BlockPos pos;
-    public final CompressedEdge[] edgeByDirection = new CompressedEdge[6];
+    public final Edge[] edgeByDirection = new Edge[6];
     public final int id;
     public boolean isPortal;
     public boolean isInventory;
@@ -19,7 +19,7 @@ public final class Node {
     }
 
     public Node neighborIn(EnumFacing dir) {
-        CompressedEdge e = this.edgeByDirection[dir.ordinal()];
+        Edge e = this.edgeByDirection[dir.ordinal()];
         if (e == null) return null;
         return (e.start == this) ? e.end : e.start;
     }
