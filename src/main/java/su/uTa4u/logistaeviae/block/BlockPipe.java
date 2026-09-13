@@ -9,7 +9,6 @@ import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.BlockRenderLayer;
@@ -26,10 +25,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import su.uTa4u.logistaeviae.LogistaeViae;
 import su.uTa4u.logistaeviae.Tags;
 import su.uTa4u.logistaeviae.inventory.GuiHandler;
-import su.uTa4u.logistaeviae.logic.PipeNetwork;
-import su.uTa4u.logistaeviae.logic.PipeNetworkSavedData;
 import su.uTa4u.logistaeviae.logic.type.OrderPlacer;
-import su.uTa4u.logistaeviae.logic.type.PipeLocation;
 import su.uTa4u.logistaeviae.model.PipeModelManager;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
 import su.uTa4u.logistaeviae.util.VecUtils;
@@ -41,7 +37,6 @@ import java.util.function.Supplier;
 
 // TODO: can't be placed if player is in the same block despite AABB allowing it
 public class BlockPipe extends Block implements ITileEntityProvider {
-    // ArrayMap implementation should be fine for only 64 entries
     private static final Byte2ObjectMap<AxisAlignedBB> AABB_BY_CONNECTION = generateAABBs();
 
     public static final ConnectionsProperty CONNECTION_PROP = new ConnectionsProperty("connections");
@@ -108,48 +103,13 @@ public class BlockPipe extends Block implements ITileEntityProvider {
             TileEntityPipe pipe = TileEntityPipe.getOrNull(world.getTileEntity(pos));
             if (pipe == null) return;
 
-            PipeLocation pipeLoc = new PipeLocation(world.provider.getDimension(), pos);
-            PipeNetworkSavedData savedData = PipeNetworkSavedData.get(world);
-            PipeNetwork foundNetwork = null;
             for (EnumFacing facing : EnumFacing.VALUES) {
-                BlockPos nbourPos = pos.offset(facing);
-                TileEntity te = world.getTileEntity(nbourPos);
-                if (te instanceof TileEntityPipe) {
-                    pipe.connect(facing);
-
-                    PipeLocation nbourLoc = new PipeLocation(world.provider.getDimension(), nbourPos);
-                    PipeNetwork nbourNetwork = savedData.getNetwork(nbourLoc);
-                    if (nbourNetwork != null) {
-                        if (foundNetwork == null) {
-                            foundNetwork = nbourNetwork;
-                            foundNetwork.add(pipeLoc, pipe.getConnections());
-                        } else {
-                            foundNetwork.merge(nbourNetwork);
-                        }
-                    }
-                } else if (pipe.canConnect(te, facing.getOpposite())) {
+                TileEntity te = world.getTileEntity(pos.offset(facing));
+                if (te instanceof TileEntityPipe || TileEntityPipe.canConnect(te, facing.getOpposite())) {
                     pipe.connect(facing);
                 }
             }
-            if (foundNetwork == null) {
-                savedData.createNetwork(pipeLoc, pipe.getConnections());
-            }
         }
-    }
-
-    @Override
-    public boolean removedByPlayer(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull EntityPlayer player, boolean willHarvest) {
-        if (super.removedByPlayer(state, world, pos, player, willHarvest)) {
-            if (!world.isRemote) {
-                PipeLocation pipeLoc = new PipeLocation(world.provider.getDimension(), pos);
-                PipeNetwork pipeNetwork = PipeNetworkSavedData.get(world).getNetwork(pipeLoc);
-                if (pipeNetwork != null) {
-                    pipeNetwork.remove(pipeLoc);
-                }
-            }
-            return true;
-        }
-        return false;
     }
 
     @Override
@@ -161,7 +121,7 @@ public class BlockPipe extends Block implements ITileEntityProvider {
 
             EnumFacing facing = VecUtils.getFacingFromNeighbouringPos(pos, fromPos);
             TileEntity nbour = world.getTileEntity(fromPos);
-            if (nbour instanceof TileEntityPipe || pipe.canConnect(nbour, facing)) {
+            if (nbour instanceof TileEntityPipe || TileEntityPipe.canConnect(nbour, facing)) {
                 pipe.connect(facing);
             } else {
                 pipe.disconnect(facing);
