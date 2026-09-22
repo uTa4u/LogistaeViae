@@ -25,6 +25,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import su.uTa4u.logistaeviae.LogistaeViae;
 import su.uTa4u.logistaeviae.Tags;
 import su.uTa4u.logistaeviae.inventory.GuiHandler;
+import su.uTa4u.logistaeviae.logic.PipeWorldSavedData;
+import su.uTa4u.logistaeviae.logic.Subnet;
 import su.uTa4u.logistaeviae.logic.type.OrderPlacer;
 import su.uTa4u.logistaeviae.model.PipeModelManager;
 import su.uTa4u.logistaeviae.tileentity.TileEntityPipe;
@@ -109,7 +111,21 @@ public class BlockPipe extends Block implements ITileEntityProvider {
                     pipe.connect(facing);
                 }
             }
+
+            PipeWorldSavedData data = PipeWorldSavedData.get(world);
+            Subnet subnet = data.getOrCreateSubnet(pos);
+            subnet.setLoaded(true);
+            subnet.markDirty();
+            data.markSubnetAndBoundaryDirty(pos);
         }
+    }
+
+    @Override
+    public void breakBlock(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
+        if (!world.isRemote) {
+            PipeWorldSavedData.get(world).markSubnetAndBoundaryDirty(pos);
+        }
+        super.breakBlock(world, pos, state);
     }
 
     @Override
@@ -126,6 +142,8 @@ public class BlockPipe extends Block implements ITileEntityProvider {
             } else {
                 pipe.disconnect(facing);
             }
+
+            PipeWorldSavedData.get(world).markSubnetAndBoundaryDirty(pos);
         }
     }
 

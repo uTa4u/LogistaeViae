@@ -15,9 +15,9 @@ public final class Node {
 
     public Node(BlockPos pos) {
         this.pos = pos;
-        this.id = ((pos.getX() & Subnet.SUBNET_MASK) << Subnet.COORD_BITS * 2)
-                | ((pos.getY() & Subnet.SUBNET_MASK) << Subnet.COORD_BITS * 1)
-                | ((pos.getZ() & Subnet.SUBNET_MASK) << Subnet.COORD_BITS * 0);
+        this.id = ((pos.getX() & Subnet.SUBNET_MASK) << Subnet.NODE_X_SHIFT)
+                | ((pos.getY() & Subnet.SUBNET_MASK) << Subnet.NODE_Y_SHIFT)
+                | ((pos.getZ() & Subnet.SUBNET_MASK) << Subnet.NODE_Z_SHIFT);
     }
 
     public BlockPos getPos() {

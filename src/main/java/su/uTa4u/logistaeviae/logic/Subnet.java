@@ -17,10 +17,13 @@ import java.util.Queue;
 import java.util.Set;
 
 public final class Subnet {
-    public static final int SUBNET_SHIFT = 4;
+    private static final int SUBNET_SHIFT = 4;
     public static final int SUBNET_MASK = (1 << SUBNET_SHIFT) - 1;
-    public static final int COORD_BITS = SUBNET_SHIFT;
-    public static final int NODE_ID_BITS = COORD_BITS * 3;
+    private static final int COORD_BITS = SUBNET_SHIFT;
+    private static final int NODE_ID_BITS = COORD_BITS * 3;
+    public static final int NODE_X_SHIFT = COORD_BITS * 2;
+    public static final int NODE_Y_SHIFT = COORD_BITS;
+    public static final int NODE_Z_SHIFT = 0;
 
     private static final int MAX_CORRIDOR = 4096;
     private static final int REBUILD_COOLDOWN = 10;
@@ -33,7 +36,7 @@ public final class Subnet {
     private final List<Node> portals = new ArrayList<>();
     private final PathCache pathCache = new PathCache();
 
-    private boolean loaded = true;
+    private boolean loaded;
     private boolean dirty;
     private int cooldownTicks = 0;
 
@@ -48,25 +51,30 @@ public final class Subnet {
         this.cooldownTicks = REBUILD_COOLDOWN;
     }
 
+    // TODO: also set a timer to remove subnets unloaded for too long to save memory
     public void setLoaded(boolean loaded) {
         this.loaded = loaded;
     }
 
-    public void tick(World world) {
-        if (!this.loaded) return;
-        if (!this.dirty) return;
-        if (--this.cooldownTicks > 0) return;
+    // Returns true if subnet is empty and should be removed
+    public boolean tick(World world) {
+        if (!this.loaded) return false;
+        if (!this.dirty) return false;
+        if (--this.cooldownTicks > 0) return false;
 
         this.nodeMap.clear();
         this.edges.clear();
         this.portals.clear();
         this.pathCache.clear();
+
         discoverNodes(world);
         compressEdges(world);
         identifyPortals();
         buildNeighborReferences();
 
         this.dirty = false;
+
+        return this.nodeMap.isEmpty();
     }
 
     // TODO: use Dijksta or even A* instead of BFS
@@ -168,7 +176,6 @@ public final class Subnet {
     }
 
     private void compressEdges(World world) {
-        this.edges.clear();
         Set<Long> seen = new HashSet<>();
 
         for (Node node : this.nodeMap.values()) {
